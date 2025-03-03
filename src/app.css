@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root,
+  body,
+  main {
+    @apply h-screen;
+  }
+
+  :root {
+    @apply bg-zinc-900 text-zinc-50;
+  }
+}
