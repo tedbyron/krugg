@@ -14,7 +14,11 @@
       {
         "title": "league-thingy",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "backgroundColor": null,
+        "backgroundThrottling": "suspend",
+        "devtools": true,
+        "visible": false
       }
     ],
     "security": {
@@ -28,7 +32,7 @@
   "bundle": {
     "active": true,
     "category": "Utility",
-    "copyright": "© Copyright 2025 Theodore Byron",
+    "copyright": "© Copyright 2025 Teddy Byron",
     "targets": ["app", "dmg", "msi"],
     "icon": [
       "icons/32x32.png",

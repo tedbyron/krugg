@@ -23,7 +23,7 @@ panic = "abort"
 strip = true
 
 [build-dependencies]
-tauri-build = "2.0.6"
+tauri-build = { version = "2.0.6", features = [] }
 
 [dependencies]
 serde = { version = "1.0.218", features = ["derive"] }
@@ -43,3 +43,9 @@ tauri-plugin-opener = "2.2.6"
 tauri-plugin-positioner = { version = "2.2.0", features = ["tray-icon"] }
 tauri-plugin-single-instance = "2.2.2"
 tauri-plugin-store = "2.2.0"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+sysinfo = { version = "0.33.1", default-features = false, features = ["system", "windows"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+sysinfo = { version = "0.33.1", default-features = false, features = ["system"] }
