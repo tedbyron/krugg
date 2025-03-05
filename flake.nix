@@ -18,7 +18,7 @@
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
-        rust = pkgs.rust-bin.fromRustupToolchainFile ./crate/rust-toolchain.toml;
+        rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
       in
       with pkgs;
       {
@@ -26,6 +26,9 @@
 
         devShells.default = mkShellNoCC {
           packages = [
+            cargo-edit
+            cargo-feature
+            cargo-tauri
             nodejs_22
             rust
           ];
