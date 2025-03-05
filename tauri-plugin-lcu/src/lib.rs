@@ -128,5 +128,6 @@ pub fn find_lockfile<R: Runtime>(app: &AppHandle<R>) -> Result<LockFile> {
 
 #[cfg(target_os = "macos")]
 pub fn find_lockfile() -> Result<LockFile> {
-    // pgrep -f LeagueClientUx
+    // /bin/pgrep -lf LeagueClientUx
+    // /bin/ps -axc -o args= | /bin/grep LeagueClientUx
 }
