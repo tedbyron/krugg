@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    league_thingy_lib::run();
+    krugg_lib::run();
 }

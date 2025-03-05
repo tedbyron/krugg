@@ -1,0 +1,14 @@
+[workspace]
+members = ["krugg-model", "src-tauri", 'tauri-plugin-lcu']
+default-members = ["krugg-model", "src-tauri", "tauri-plugin-lcu"]
+resolver = "3"
+
+[profile.dev]
+debug = false
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

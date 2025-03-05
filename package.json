@@ -1,8 +1,10 @@
 {
-  "name": "@tedbyron/league-thingy",
+  "name": "@tedbyron/krugg",
   "private": true,
   "license": "Apache-2.0",
   "author": "Teddy Byron <ted@ted.ooo>",
+  "homepage": "https://github.com/tedbyron/krugg",
+  "repository": "github:tedbyron/krugg",
   "type": "module",
   "engines": {
     "node": ">=22"

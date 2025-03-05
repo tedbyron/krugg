@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "league-thingy",
+  "productName": "krugg",
   "version": "0.1.0",
-  "identifier": "com.league-thingy.app",
+  "identifier": "com.krugg.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -12,13 +12,14 @@
   "app": {
     "windows": [
       {
-        "title": "league-thingy",
+        "title": "krugg",
         "width": 800,
         "height": 600,
         "backgroundColor": null,
         "backgroundThrottling": "suspend",
         "devtools": true,
-        "visible": false
+        "visible": false,
+        "focus": false
       }
     ],
     "security": {

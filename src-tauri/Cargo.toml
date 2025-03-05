@@ -1,31 +1,24 @@
 [package]
-name = "league-thingy"
+name = "krugg"
 publish = false
+version = "0.1.0"
+edition = "2024"
 license = "Apache-2.0"
 authors = ["ted@ted.ooo"]
-edition = "2024"
+repository = "https://github.com/tedbyron/krugg"
 
 [lib]
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "league_thingy_lib"
+name = "krugg_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
-
-[profile.dev]
-debug = false
-
-[profile.release]
-codegen-units = 1
-lto = true
-opt-level = 3
-panic = "abort"
-strip = true
 
 [build-dependencies]
 tauri-build = { version = "2.0.6", features = [] }
 
 [dependencies]
+krugg-model = { version = "0.1.0", path = "../krugg-model" }
 serde = { version = "1.0.218", features = ["derive"] }
 serde_json = "1.0.140"
 tauri = { version = "2.3.1", features = ["native-tls"] }
@@ -39,13 +32,9 @@ tauri-plugin-http = { version = "2.3.0", default-features = false, features = [
     "macos-system-configuration",
     "native-tls"
 ] }
+tauri-plugin-lcu = { version = "0.1.0", path = "../tauri-plugin-lcu" }
 tauri-plugin-opener = "2.2.6"
 tauri-plugin-positioner = { version = "2.2.0", features = ["tray-icon"] }
+tauri-plugin-shell = "2.2.0"
 tauri-plugin-single-instance = "2.2.2"
 tauri-plugin-store = "2.2.0"
-
-[target.'cfg(target_os = "windows")'.dependencies]
-sysinfo = { version = "0.33.1", default-features = false, features = ["system", "windows"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-sysinfo = { version = "0.33.1", default-features = false, features = ["system"] }
