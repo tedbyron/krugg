@@ -1,3 +1,3 @@
 # krugg
 
-Alternative to the u.gg client.
+Alternative client for u.gg
