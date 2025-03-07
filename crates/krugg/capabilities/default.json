@@ -19,7 +19,32 @@
         {
           "name": "wmic",
           "cmd": "WMIC.exe",
-          "args": ["process WHERE Name='LeagueClientUx.exe' GET CommandLine"]
+          "args": ["process", "WHERE", "Name='LeagueClientUx.exe'", "GET", "CommandLine"]
+        },
+        {
+          "name": "ps",
+          "cmd": "ps",
+          "args": ["-xo", "args="]
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "grep",
+          "cmd": "grep",
+          "args": ["LeagueClientUx"]
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-stdin-write",
+      "allow": [
+        {
+          "name": "grep",
+          "cmd": "grep",
+          "args": ["LeagueClientUx"]
         }
       ]
     },

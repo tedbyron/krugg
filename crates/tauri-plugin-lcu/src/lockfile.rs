@@ -99,9 +99,44 @@ impl LockFile {
 
     /// Retrieve the lockfile path from the running League client.
     #[cfg(target_os = "macos")]
-    async fn path() -> Result<LockFile> {
-        // /bin/pgrep -lf LeagueClientUx
-        // /bin/ps -axc -o args= | /bin/grep LeagueClientUx
+    async fn path<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf> {
+        use tauri_plugin_shell::process::CommandEvent;
+
+        let shell = app.shell();
+        let output = shell.command("ps").args(["-xo", "args="]).output().await?;
+        if output.status.code() != Some(0) {
+            return Err(Error::Command(output.status.code()));
+        }
+        dbg!(str::from_utf8(&output.stdout));
+        // let (mut rx, mut child) = shell.command("grep").arg("LeagueClientUx").spawn()?;
+        // child.write(&output.stdout)?;
+        // let mut buf = vec![];
+        // loop {
+        //     match rx.recv().await {
+        //         Some(CommandEvent::Stdout(output)) => {
+        //             buf.extend_from_slice(&output);
+        //         }
+        //         Some(CommandEvent::Terminated(_)) | None => {
+        //             break;
+        //         }
+        //         Some(_) => (),
+        //     }
+        // }
+
+        // let cmd = str::from_utf8(&buf)?;
+        // dbg!(&cmd);
+        // let quote_positions = cmd
+        //     .chars()
+        //     .enumerate()
+        //     .filter_map(|(i, c)| if c == '"' { Some(i) } else { None })
+        //     .collect::<Box<[_]>>();
+        // let argv = quote_positions
+        //     .chunks_exact(2)
+        //     .map(|chunk| &cmd[chunk[0] + 1..chunk[1]])
+        //     .collect::<Box<[_]>>();
+        // let exe_path = Path::new(&argv[0]);
+
+        Ok(PathBuf::new())
     }
 
     /// Parse the lockfile contents.
@@ -155,10 +190,10 @@ impl LockFile {
 
         // Update state if possible before starting the file watcher.
         if let Some(lockfile) = Self::parse(&path) {
+            _ = app.emit("lcu-lockfile", lockfile.clone());
             let state = app.state::<PluginState>();
             let mut lock = state.lockfile.blocking_write();
-            *lock = Some(lockfile.clone());
-            _ = app.emit("lcu-lockfile", lockfile);
+            *lock = Some(lockfile);
         }
 
         // Spawn a background task to update state when the file changes.
