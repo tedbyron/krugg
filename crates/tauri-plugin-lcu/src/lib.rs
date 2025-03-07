@@ -20,7 +20,8 @@ pub use lockfile::LockFile;
 /// Access to the lcu APIs.
 pub struct Lcu<R: Runtime>(AppHandle<R>);
 
-/// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to access the lcu APIs.
+/// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to
+/// access the lcu APIs.
 pub trait LcuExt<R: Runtime> {
     fn lcu(&self) -> &Lcu<R>;
 }

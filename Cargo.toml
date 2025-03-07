@@ -1,6 +1,5 @@
 [workspace]
-members = ["krugg-model", "src-tauri", 'tauri-plugin-lcu']
-default-members = ["krugg-model", "src-tauri", "tauri-plugin-lcu"]
+members = ["crates/*"]
 resolver = "3"
 
 [profile.dev]

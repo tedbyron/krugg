@@ -1,5 +1,5 @@
 #![warn(clippy::all, clippy::nursery, rust_2018_idioms)]
-#![doc = include_str!("../../README.md")]
+#![doc = include_str!("../../../README.md")]
 
 use krugg_model::AppState;
 use tauri::{Manager, tray::TrayIconBuilder};
