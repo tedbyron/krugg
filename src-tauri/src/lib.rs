@@ -1,8 +1,7 @@
 #![warn(clippy::all, clippy::nursery, rust_2018_idioms)]
+#![doc = include_str!("../../README.md")]
 
-use std::sync::Mutex;
-
-use krugg_model::{AppConfig, AppState};
+use krugg_model::AppState;
 use tauri::{Manager, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 
@@ -29,14 +28,8 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_lcu::init())
         .setup(|app| {
-            // Read config file.
-            let config = serde_json::from_str::<AppConfig>(include_str!("../config.json"))?;
-            dbg!(&config);
-
             // Setup app state.
-            app.manage(AppState {
-                config: Mutex::new(config),
-            });
+            app.manage(AppState {});
 
             // Tray-relative window positioning.
             TrayIconBuilder::new()
