@@ -2,6 +2,7 @@ use std::{
     fs,
     net::Ipv4Addr,
     path::{Path, PathBuf},
+    sync::LazyLock,
 };
 
 use base64ct::{Base64, Encoding};
@@ -12,6 +13,7 @@ use notify_debouncer_full::{
 };
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, Runtime, async_runtime};
+use tauri_plugin_http::reqwest::Url;
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_store::{JsonValue, StoreExt};
 use tokio::{
@@ -21,6 +23,12 @@ use tokio::{
 
 use crate::{Error, LcuState, Result, http};
 
+/// LCU API username.
+const USERNAME: &str = "riot";
+/// LCU API base URL without port.
+static BASE_URL: LazyLock<Url> =
+    LazyLock::new(|| Url::parse(&format!("https://{}", Ipv4Addr::LOCALHOST)).unwrap());
+
 /// LCU lockfile.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,11 +36,9 @@ pub struct LockFile {
     pub path: PathBuf,
     pub pid: u32,
     pub port: u16,
-    pub address: String,
-    pub protocol: String,
-    pub username: String,
+    pub base_url: Url,
     pub token: String,
-    pub b64_auth: String,
+    pub auth_header: String,
 }
 
 impl LockFile {
@@ -155,22 +161,22 @@ impl LockFile {
         let Ok(port) = parts[2].parse::<u16>() else {
             return None;
         };
-        let username = "riot".to_owned();
         let token = parts[3].to_owned();
-        let b64_auth = format!(
+
+        let mut base_url = BASE_URL.clone();
+        base_url.set_port(Some(port)).ok()?;
+        let auth_header = format!(
             "Basic {}",
-            Base64::encode_string(format!("{username}:{token}").as_bytes())
+            Base64::encode_string(format!("{USERNAME}:{token}").as_bytes())
         );
 
         Some(Self {
             path: path.to_owned(),
             pid,
             port,
-            address: Ipv4Addr::LOCALHOST.to_string(),
-            protocol: parts[4].to_owned(),
-            username,
+            base_url,
             token,
-            b64_auth,
+            auth_header,
         })
     }
 
@@ -199,7 +205,7 @@ impl LockFile {
             _ = app.emit("lcu-lockfile", lockfile.clone());
             let state = app.state::<LcuState>();
             {
-                let mut lock = state.client.blocking_write();
+                let mut lock = state.client.blocking_lock();
                 *lock = Some(http::client(&lockfile)?);
             }
             {
@@ -211,10 +217,11 @@ impl LockFile {
         // Spawn a background task to update state when the file changes.
         let state = app.state::<LcuState>();
         let cancel_token = state.cancel_token.clone();
-        let handle = app.clone();
+        let app = app.clone();
         async_runtime::spawn(state.tracker.track_future(async move {
-            // Watch for changes to the lockfile. The channel and watcher need
-            // to live for the duration of the task.
+            // Watch for changes to the lockfile using the debounced watcher
+            // so the lockfile isn't read until it has contents. The channel
+            // and watcher need to live for the duration of the task.
             let (tx, mut rx) = async_runtime::channel(1);
             let p = path.clone();
             let mut watcher = notify_debouncer_full::new_debouncer(
@@ -240,7 +247,7 @@ impl LockFile {
             watcher.watch(&path, RecursiveMode::NonRecursive).unwrap();
             rx.close();
 
-            let state = handle.state::<LcuState>();
+            let state = app.state::<LcuState>();
             loop {
                 tokio::select! {
                     biased;
@@ -257,23 +264,23 @@ impl LockFile {
                     Some(msg) = rx.recv() => {
                         if msg != *state.lockfile.read().await {
                             if let Some(ref lockfile) = msg {
-                                let mut lock = state.client.write().await;
+                                let mut lock = state.client.lock().await;
                                 if let Ok(client) = http::client(lockfile) {
                                     *lock = Some(client);
                                 }
                             }
                             {
-                            let mut lock = state.lockfile.write().await;
-                            *lock = msg.clone();
-                                }
+                                let mut lock = state.lockfile.write().await;
+                                *lock = msg.clone();
+                            }
                         }
 
                         match msg {
                             Some(lockfile) => {
-                                _ = handle.emit("lcu-lockfile", lockfile);
+                                _ = app.emit("lcu-lockfile", lockfile);
                             }
                             None => {
-                                _ = handle.emit("lcu-lockfile", ());
+                                _ = app.emit("lcu-lockfile", ());
                             }
                         }
                     }

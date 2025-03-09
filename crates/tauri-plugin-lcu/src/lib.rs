@@ -3,7 +3,7 @@
 
 use tauri::{
     AppHandle, Manager, Runtime,
-    async_runtime::{self, RwLock},
+    async_runtime::{self, Mutex, RwLock},
     plugin::{Builder, TauriPlugin},
 };
 use tauri_plugin_http::reqwest::Client;
@@ -16,7 +16,6 @@ mod http;
 mod lockfile;
 
 pub use error::{Error, Result};
-pub use lockfile::LockFile;
 
 /// Access to the LCU APIs.
 pub struct Lcu<R: Runtime>(AppHandle<R>);
@@ -35,9 +34,9 @@ impl<R: Runtime, T: Manager<R>> LcuExt<R> for T {
 
 struct LcuState {
     /// LCU lockfile.
-    lockfile: RwLock<Option<LockFile>>,
+    lockfile: RwLock<Option<lockfile::LockFile>>,
     /// Reusable HTTP client.
-    client: RwLock<Option<Client>>,
+    client: Mutex<Option<Client>>,
     /// Used to cancel all tasks when the plugin is dropped.
     cancel_token: CancellationToken,
     /// Used to wait for all tasks to complete before dropping the plugin.
@@ -53,12 +52,12 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             app.manage(lcu);
             app.manage(LcuState {
                 lockfile: RwLock::new(None),
-                client: RwLock::new(None),
+                client: Mutex::new(None),
                 cancel_token: CancellationToken::new(),
                 tracker: TaskTracker::new(),
             });
 
-            LockFile::watch(app)?;
+            lockfile::LockFile::watch(app)?;
 
             Ok(())
         })

@@ -9,3 +9,4 @@ repository = "https://github.com/tedbyron/krugg"
 
 [dependencies]
 serde = { version = "1.0.218", features = ["derive"] }
+ugg-types = "0.7.0"

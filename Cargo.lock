@@ -2131,6 +2131,7 @@ name = "krugg-model"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "ugg-types",
 ]
 
 [[package]]
@@ -4874,6 +4875,15 @@ dependencies = [
  "memoffset",
  "tempfile",
  "winapi",
+]
+
+[[package]]
+name = "ugg-types"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b9eb915eea5a662e145c1f3267934f640ae8d58e38a81cfa79d9d5fdfce90b6"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

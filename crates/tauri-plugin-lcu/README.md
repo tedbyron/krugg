@@ -1,3 +1,3 @@
 # tauri-plugin-lcu
 
-Tauri plugin to make LCU API calls
+League of Legends client (LCU) API client for tauri.
