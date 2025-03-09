@@ -9,6 +9,7 @@
     "autostart:default",
     "global-shortcut:default",
     "http:default",
+    "lcu:default",
     "opener:default",
     "positioner:default",
     "shell:default",

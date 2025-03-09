@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-update-rune-page"
+description = "Enables the update_rune_page command without any pre-configured scope."
+commands.allow = ["update_rune_page"]
+
+[[permission]]
+identifier = "deny-update-rune-page"
+description = "Denies the update_rune_page command without any pre-configured scope."
+commands.deny = ["update_rune_page"]

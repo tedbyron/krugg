@@ -18,7 +18,6 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.0.6", features = [] }
 
 [dependencies]
-krugg-model = { version = "0.1.0", path = "../krugg-model" }
 serde = { version = "1.0.218", features = ["derive"] }
 serde_json = "1.0.140"
 tauri = { version = "2.3.1", features = ["native-tls"] }
@@ -32,7 +31,10 @@ tauri-plugin-http = { version = "2.3.0", default-features = false, features = [
     "macos-system-configuration",
     "native-tls"
 ] }
-tauri-plugin-lcu = { version = "0.1.0", path = "../tauri-plugin-lcu" }
+tauri-plugin-lcu = { version = "0.1.0", path = "../tauri-plugin-lcu", features = [
+    "tauri-plugin-store",
+    "ugg-types"
+] }
 tauri-plugin-opener = "2.2.6"
 tauri-plugin-positioner = { version = "2.2.0", features = ["tray-icon"] }
 tauri-plugin-shell = "2.2.0"

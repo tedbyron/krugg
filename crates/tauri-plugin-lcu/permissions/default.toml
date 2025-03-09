@@ -1,3 +1,13 @@
 [default]
-description = "Default permissions for the plugin"
-permissions = []
+description = "Allows making requests to the LCU API"
+permissions = [
+    "allow-get",
+    "allow-head",
+    "allow-post",
+    "allow-put",
+    "allow-delete",
+    "allow-patch",
+    "allow-get-current-summoner",
+    "allow-get-current-rune-page",
+    "allow-update-rune-page"
+]

@@ -3,14 +3,21 @@
 
 use std::time::Duration;
 
-use krugg_model::{AppState, STORE_FILE};
 use tauri::{Manager, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_store::StoreExt;
 
 mod commands;
 
+/// Persistant store file.
+const STORE_FILE: &str = "app_data.json";
+
+/// Tauri managed app state.
+#[derive(Debug)]
+pub struct AppState {}
+
 pub fn run() {
+    #[allow(clippy::large_stack_frames)] // generate_context macro is scuffed
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![commands::show_main_window])
         .plugin(tauri_plugin_autostart::init(
@@ -29,7 +36,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_lcu::init())
+        .plugin(tauri_plugin_lcu::init(Some(STORE_FILE)))
         .setup(|app| {
             // Setup app state.
             app.manage(AppState {});

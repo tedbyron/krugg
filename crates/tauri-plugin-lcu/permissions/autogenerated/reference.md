@@ -1,7 +1,16 @@
 ## Default Permission
 
-Default permissions for the plugin
+Allows making requests to the LCU API
 
+- `allow-get`
+- `allow-head`
+- `allow-post`
+- `allow-put`
+- `allow-delete`
+- `allow-patch`
+- `allow-get-current-summoner`
+- `allow-get-current-rune-page`
+- `allow-update-rune-page`
 
 ## Permission Table
 
@@ -15,12 +24,12 @@ Default permissions for the plugin
 <tr>
 <td>
 
-`lcu:allow-ping`
+`lcu:allow-delete`
 
 </td>
 <td>
 
-Enables the ping command without any pre-configured scope.
+Enables the delete command without any pre-configured scope.
 
 </td>
 </tr>
@@ -28,12 +37,220 @@ Enables the ping command without any pre-configured scope.
 <tr>
 <td>
 
-`lcu:deny-ping`
+`lcu:deny-delete`
 
 </td>
 <td>
 
-Denies the ping command without any pre-configured scope.
+Denies the delete command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:allow-get`
+
+</td>
+<td>
+
+Enables the get command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:deny-get`
+
+</td>
+<td>
+
+Denies the get command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:allow-get-current-rune-page`
+
+</td>
+<td>
+
+Enables the get_current_rune_page command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:deny-get-current-rune-page`
+
+</td>
+<td>
+
+Denies the get_current_rune_page command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:allow-get-current-summoner`
+
+</td>
+<td>
+
+Enables the get_current_summoner command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:deny-get-current-summoner`
+
+</td>
+<td>
+
+Denies the get_current_summoner command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:allow-head`
+
+</td>
+<td>
+
+Enables the head command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:deny-head`
+
+</td>
+<td>
+
+Denies the head command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:allow-patch`
+
+</td>
+<td>
+
+Enables the patch command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:deny-patch`
+
+</td>
+<td>
+
+Denies the patch command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:allow-post`
+
+</td>
+<td>
+
+Enables the post command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:deny-post`
+
+</td>
+<td>
+
+Denies the post command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:allow-put`
+
+</td>
+<td>
+
+Enables the put command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:deny-put`
+
+</td>
+<td>
+
+Denies the put command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:allow-update-rune-page`
+
+</td>
+<td>
+
+Enables the update_rune_page command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:deny-update-rune-page`
+
+</td>
+<td>
+
+Denies the update_rune_page command without any pre-configured scope.
 
 </td>
 </tr>

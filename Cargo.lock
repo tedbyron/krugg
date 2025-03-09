@@ -2110,7 +2110,6 @@ dependencies = [
 name = "krugg"
 version = "0.1.0"
 dependencies = [
- "krugg-model",
  "serde",
  "serde_json",
  "tauri",
@@ -2124,14 +2123,6 @@ dependencies = [
  "tauri-plugin-shell",
  "tauri-plugin-single-instance",
  "tauri-plugin-store",
-]
-
-[[package]]
-name = "krugg-model"
-version = "0.1.0"
-dependencies = [
- "serde",
- "ugg-types",
 ]
 
 [[package]]
@@ -4328,9 +4319,9 @@ name = "tauri-plugin-lcu"
 version = "0.1.0"
 dependencies = [
  "base64ct",
- "krugg-model",
  "notify-debouncer-full",
  "serde",
+ "serde_json",
  "tauri",
  "tauri-plugin",
  "tauri-plugin-http",
@@ -4339,6 +4330,7 @@ dependencies = [
  "thiserror 2.0.12",
  "tokio",
  "tokio-util",
+ "ugg-types",
 ]
 
 [[package]]

@@ -8,14 +8,19 @@ authors = ["ted@ted.ooo"]
 repository = "https://github.com/tedbyron/krugg"
 links = "tauri-plugin-lcu"
 
+[features]
+default = []
+tauri-plugin-store = ["dep:tauri-plugin-store"]
+ugg-types = ["dep:ugg-types"]
+
 [build-dependencies]
 tauri-plugin = { version = "2.0.5", features = ["build"] }
 
 [dependencies]
 base64ct = { version = "1.6.0", features = ["std"] }
-krugg-model = { version = "0.1.0", path = "../krugg-model" }
 notify-debouncer-full = "0.5.0"
 serde = { version = "1.0.218", features = ["derive"] }
+serde_json = "1.0.140"
 tauri = "2.3.1"
 tauri-plugin-http = { version = "2.3.0", default-features = false, features = [
     "charset",
@@ -26,7 +31,8 @@ tauri-plugin-http = { version = "2.3.0", default-features = false, features = [
     "native-tls"
 ] }
 tauri-plugin-shell = "2.2.0"
-tauri-plugin-store = "2.2.0"
+tauri-plugin-store = { version = "2.2.0", optional = true }
 thiserror = "2.0.12"
 tokio = { version = "1.44.0", default-features = false, features = ["time"] }
 tokio-util = { version = "0.7.13", features = ["rt"] }
+ugg-types = { version = "0.7.0", optional = true }

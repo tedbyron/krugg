@@ -10,7 +10,7 @@ use tauri_plugin_http::reqwest::Client;
 use tokio::task;
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
 
-mod commands;
+pub mod commands;
 mod error;
 mod http;
 mod lockfile;
@@ -33,6 +33,8 @@ impl<R: Runtime, T: Manager<R>> LcuExt<R> for T {
 }
 
 struct LcuState {
+    /// Persistent store file.
+    store_file: Option<String>,
     /// LCU lockfile.
     lockfile: RwLock<Option<lockfile::LockFile>>,
     /// Reusable HTTP client.
@@ -44,13 +46,20 @@ struct LcuState {
 }
 
 /// Initialize the plugin.
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
+///
+/// `store_file` is an optional path to a `tauri-plugin-store` store. This
+/// requires the `tauri-plugin-store` feature. If provided, the LCU lockfile
+/// path will be saved in the store under the key `"lockfile_path"`.
+pub fn init<R: Runtime, S: ToString>(store_file: Option<S>) -> TauriPlugin<R> {
+    let store_file = store_file.map(|s| s.to_string());
+
     Builder::new("lcu")
         .invoke_handler(tauri::generate_handler![])
         .setup(|app, _api| {
             let lcu = Lcu(app.clone());
             app.manage(lcu);
             app.manage(LcuState {
+                store_file,
                 lockfile: RwLock::new(None),
                 client: Mutex::new(None),
                 cancel_token: CancellationToken::new(),
@@ -68,7 +77,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             task::block_in_place(move || {
                 async_runtime::block_on(async move {
                     state.tracker.wait().await;
-                })
+                });
             });
         })
         .build()

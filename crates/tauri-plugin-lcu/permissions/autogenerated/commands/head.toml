@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-head"
+description = "Enables the head command without any pre-configured scope."
+commands.allow = ["head"]
+
+[[permission]]
+identifier = "deny-head"
+description = "Denies the head command without any pre-configured scope."
+commands.deny = ["head"]

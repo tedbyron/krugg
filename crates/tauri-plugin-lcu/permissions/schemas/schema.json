@@ -295,17 +295,97 @@
       "type": "string",
       "oneOf": [
         {
-          "description": "Enables the ping command without any pre-configured scope.",
+          "description": "Enables the delete command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-ping"
+          "const": "allow-delete"
         },
         {
-          "description": "Denies the ping command without any pre-configured scope.",
+          "description": "Denies the delete command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-ping"
+          "const": "deny-delete"
         },
         {
-          "description": "Default permissions for the plugin",
+          "description": "Enables the get command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get"
+        },
+        {
+          "description": "Denies the get command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get"
+        },
+        {
+          "description": "Enables the get_current_rune_page command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-current-rune-page"
+        },
+        {
+          "description": "Denies the get_current_rune_page command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-current-rune-page"
+        },
+        {
+          "description": "Enables the get_current_summoner command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-current-summoner"
+        },
+        {
+          "description": "Denies the get_current_summoner command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-current-summoner"
+        },
+        {
+          "description": "Enables the head command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-head"
+        },
+        {
+          "description": "Denies the head command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-head"
+        },
+        {
+          "description": "Enables the patch command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-patch"
+        },
+        {
+          "description": "Denies the patch command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-patch"
+        },
+        {
+          "description": "Enables the post command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-post"
+        },
+        {
+          "description": "Denies the post command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-post"
+        },
+        {
+          "description": "Enables the put command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-put"
+        },
+        {
+          "description": "Denies the put command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-put"
+        },
+        {
+          "description": "Enables the update_rune_page command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-update-rune-page"
+        },
+        {
+          "description": "Denies the update_rune_page command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-update-rune-page"
+        },
+        {
+          "description": "Allows making requests to the LCU API",
           "type": "string",
           "const": "default"
         }

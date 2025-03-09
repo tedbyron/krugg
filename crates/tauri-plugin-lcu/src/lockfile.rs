@@ -6,7 +6,6 @@ use std::{
 };
 
 use base64ct::{Base64, Encoding};
-use krugg_model::STORE_FILE;
 use notify_debouncer_full::{
     DebounceEventResult,
     notify::{EventKind, RecursiveMode},
@@ -15,13 +14,14 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, Runtime, async_runtime};
 use tauri_plugin_http::reqwest::Url;
 use tauri_plugin_shell::ShellExt;
+#[cfg(feature = "tauri-plugin-store")]
 use tauri_plugin_store::{JsonValue, StoreExt};
 use tokio::{
     task,
     time::{self, Duration},
 };
 
-use crate::{Error, LcuState, Result, http};
+use crate::LcuState;
 
 /// LCU API username.
 const USERNAME: &str = "riot";
@@ -33,20 +33,32 @@ static BASE_URL: LazyLock<Url> =
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LockFile {
+    /// Path to the lockfile.
     pub path: PathBuf,
+    /// League client process ID.
     pub pid: u32,
+    /// HTTP port.
     pub port: u16,
+    /// LCU API base URL, including protocol, hostname, and port.
     pub base_url: Url,
+    /// HTTP auth password.
     pub token: String,
+    /// HTTP basic auth header value.
     pub auth_header: String,
 }
 
 impl LockFile {
     /// Retrieve the lockfile path from the store.
     fn path_from_store<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
-        if let Ok(store) = app.store(STORE_FILE) {
-            if let Some(JsonValue::String(path)) = store.get("lockfile_path") {
-                return Some(path.into());
+        #[cfg(feature = "tauri-plugin-store")]
+        {
+            let state = app.state::<LcuState>();
+            if let Some(store_file) = &state.store_file {
+                if let Ok(store) = app.store(store_file) {
+                    if let Some(JsonValue::String(path)) = store.get("lockfile_path") {
+                        return Some(path.into());
+                    }
+                }
             }
         }
 
@@ -55,7 +67,7 @@ impl LockFile {
 
     /// Retrieve the lockfile path from the running League client.
     #[cfg(target_os = "windows")]
-    async fn path<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf> {
+    async fn path<R: Runtime>(app: &AppHandle<R>) -> crate::Result<PathBuf> {
         let shell = app.shell();
         let output = shell
             .command("WMIC.exe")
@@ -69,12 +81,12 @@ impl LockFile {
             .output()
             .await?;
         if output.status.code() != Some(0) {
-            return Err(Error::Command(output.status.code()));
+            return Err(crate::Error::Command(output.status.code()));
         }
 
         let cmd = str::from_utf8(&output.stdout)?;
         if cmd.trim_ascii().is_empty() {
-            return Err(Error::ParseCommand);
+            return Err(crate::Error::ParseCommand);
         }
         let quote_positions = cmd
             .chars()
@@ -85,7 +97,7 @@ impl LockFile {
             .chunks_exact(2)
             .map(|chunk| &cmd[chunk[0] + 1..chunk[1]])
             .collect::<Box<[_]>>();
-        let exe_path = Path::new(argv.first().ok_or(Error::ParseCommand)?);
+        let exe_path = Path::new(argv.first().ok_or(crate::Error::ParseCommand)?);
         // let arg_port = "--app-port=";
         // let port = cmd.iter().find_map(|arg| {
         //     if arg.starts_with(arg_port) {
@@ -148,19 +160,14 @@ impl LockFile {
         Ok(PathBuf::new())
     }
 
-    /// Parse the lockfile contents.
-    fn parse(path: impl AsRef<Path>) -> Option<Self> {
+    /// Parse the lockfile contents. Saves the lockfile path to the store if
+    /// the plugin state's `store_file` field is set.
+    fn parse<R: Runtime>(app: &AppHandle<R>, path: impl AsRef<Path>) -> Option<Self> {
         let path = path.as_ref();
-        let Ok(lock) = fs::read_to_string(path) else {
-            return None;
-        };
-        let parts = lock.split(':').collect::<Box<[_]>>();
-        let Ok(pid) = parts[1].parse::<u32>() else {
-            return None;
-        };
-        let Ok(port) = parts[2].parse::<u16>() else {
-            return None;
-        };
+        let lockfile = fs::read_to_string(path).ok()?;
+        let parts = lockfile.split(':').collect::<Box<[_]>>();
+        let pid = parts[1].parse::<u32>().ok()?;
+        let port = parts[2].parse::<u16>().ok()?;
         let token = parts[3].to_owned();
 
         let mut base_url = BASE_URL.clone();
@@ -169,6 +176,16 @@ impl LockFile {
             "Basic {}",
             Base64::encode_string(format!("{USERNAME}:{token}").as_bytes())
         );
+
+        #[cfg(feature = "tauri-plugin-store")]
+        {
+            let state = app.state::<LcuState>();
+            if let Some(store_file) = &state.store_file {
+                if let Ok(store) = app.store(store_file) {
+                    store.set("lockfile_path", path.to_str().unwrap());
+                }
+            }
+        }
 
         Some(Self {
             path: path.to_owned(),
@@ -181,7 +198,7 @@ impl LockFile {
     }
 
     /// Watch for file system changes to the LCU lockfile.
-    pub fn watch<R: Runtime>(app: &AppHandle<R>) -> Result<()> {
+    pub fn watch<R: Runtime>(app: &AppHandle<R>) -> crate::Result<()> {
         // Get the lockfile path from the store or call Self::path every 5
         // seconds until it returns a path.
         let path = Self::path_from_store(app).unwrap_or_else(|| {
@@ -201,12 +218,12 @@ impl LockFile {
         });
 
         // Update state if possible before starting the file watcher.
-        if let Some(lockfile) = Self::parse(&path) {
+        if let Some(lockfile) = Self::parse(app, &path) {
             _ = app.emit("lcu-lockfile", lockfile.clone());
             let state = app.state::<LcuState>();
             {
                 let mut lock = state.client.blocking_lock();
-                *lock = Some(http::client(&lockfile)?);
+                *lock = Some(crate::http::client(&lockfile)?);
             }
             {
                 let mut lock = state.lockfile.blocking_write();
@@ -214,7 +231,7 @@ impl LockFile {
             }
         }
 
-        // Spawn a background task to update state when the file changes.
+        // Spawn a background task to update state when the lockfile changes.
         let state = app.state::<LcuState>();
         let cancel_token = state.cancel_token.clone();
         let app = app.clone();
@@ -224,6 +241,7 @@ impl LockFile {
             // and watcher need to live for the duration of the task.
             let (tx, mut rx) = async_runtime::channel(1);
             let p = path.clone();
+            let handle = app.clone();
             let mut watcher = notify_debouncer_full::new_debouncer(
                 Duration::from_secs(1),
                 None,
@@ -231,8 +249,8 @@ impl LockFile {
                     if let Ok(events) = res {
                         if let Some(evt) = events.first() {
                             match evt.kind {
-                                EventKind::Create(_) | EventKind::Modify(_) => {
-                                    _ = tx.blocking_send(Self::parse(&p));
+                                EventKind::Modify(_) => {
+                                    _ = tx.blocking_send(Self::parse(&handle, &p));
                                 }
                                 EventKind::Remove(_) => {
                                     _ = tx.blocking_send(None);
@@ -253,7 +271,7 @@ impl LockFile {
                     biased;
                     // Unwatch the path, close and drain the channel, and break
                     // from the loop.
-                    _ = cancel_token.cancelled() => {
+                    () = cancel_token.cancelled() => {
                         _ = watcher.unwatch(&path);
                         rx.close();
                         while rx.recv().await.is_some() {}
@@ -261,27 +279,25 @@ impl LockFile {
                     }
                     // Update state and emit the lockfile to the frontend
                     // on change.
-                    Some(msg) = rx.recv() => {
-                        if msg != *state.lockfile.read().await {
-                            if let Some(ref lockfile) = msg {
-                                let mut lock = state.client.lock().await;
-                                if let Ok(client) = http::client(lockfile) {
-                                    *lock = Some(client);
+                    Some(ref msg) = rx.recv() => {
+                        if let Some(lockfile) = msg {
+                            if Some(lockfile) != state.lockfile.read().await.as_ref() {
+                                {
+                                    let mut lock = state.lockfile.write().await;
+                                    (*lock).clone_from(msg);
+                                }
+                                _ = app.emit("lcu-lockfile", lockfile);
+                                if let Ok(client) = crate::http::client(lockfile) {
+                                    {
+                                        let mut lock = state.client.lock().await;
+                                        *lock = Some(client);
+                                    }
+                                    _ = app.emit("lcu-connected", ());
                                 }
                             }
-                            {
-                                let mut lock = state.lockfile.write().await;
-                                *lock = msg.clone();
-                            }
-                        }
-
-                        match msg {
-                            Some(lockfile) => {
-                                _ = app.emit("lcu-lockfile", lockfile);
-                            }
-                            None => {
-                                _ = app.emit("lcu-lockfile", ());
-                            }
+                        } else {
+                            _ = app.emit("lcu-lockfile", ());
+                            _ = app.emit("lcu-disconnected", ());
                         }
                     }
                 }
