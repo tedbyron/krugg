@@ -157,7 +157,10 @@ impl LockFile {
         };
         let username = "riot".to_owned();
         let token = parts[3].to_owned();
-        let b64_auth = Base64::encode_string(format!("{username}:{token}").as_bytes());
+        let b64_auth = format!(
+            "Basic {}",
+            Base64::encode_string(format!("{username}:{token}").as_bytes())
+        );
 
         Some(Self {
             path: path.to_owned(),
