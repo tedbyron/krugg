@@ -19,7 +19,7 @@ use tokio::{
     time::{self, Duration},
 };
 
-use crate::{Error, PluginState, Result};
+use crate::{Error, LcuState, Result, http};
 
 /// LCU lockfile.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -67,6 +67,9 @@ impl LockFile {
         }
 
         let cmd = str::from_utf8(&output.stdout)?;
+        if cmd.trim_ascii().is_empty() {
+            return Err(Error::ParseCommand);
+        }
         let quote_positions = cmd
             .chars()
             .enumerate()
@@ -76,7 +79,7 @@ impl LockFile {
             .chunks_exact(2)
             .map(|chunk| &cmd[chunk[0] + 1..chunk[1]])
             .collect::<Box<[_]>>();
-        let exe_path = Path::new(&argv[0]);
+        let exe_path = Path::new(argv.first().ok_or(Error::ParseCommand)?);
         // let arg_port = "--app-port=";
         // let port = cmd.iter().find_map(|arg| {
         //     if arg.starts_with(arg_port) {
@@ -191,13 +194,19 @@ impl LockFile {
         // Update state if possible before starting the file watcher.
         if let Some(lockfile) = Self::parse(&path) {
             _ = app.emit("lcu-lockfile", lockfile.clone());
-            let state = app.state::<PluginState>();
-            let mut lock = state.lockfile.blocking_write();
-            *lock = Some(lockfile);
+            let state = app.state::<LcuState>();
+            {
+                let mut lock = state.client.blocking_write();
+                *lock = Some(http::client(&lockfile)?);
+            }
+            {
+                let mut lock = state.lockfile.blocking_write();
+                *lock = Some(lockfile);
+            }
         }
 
         // Spawn a background task to update state when the file changes.
-        let state = app.state::<PluginState>();
+        let state = app.state::<LcuState>();
         let cancel_token = state.cancel_token.clone();
         let handle = app.clone();
         async_runtime::spawn(state.tracker.track_future(async move {
@@ -228,7 +237,7 @@ impl LockFile {
             watcher.watch(&path, RecursiveMode::NonRecursive).unwrap();
             rx.close();
 
-            let state = handle.state::<PluginState>();
+            let state = handle.state::<LcuState>();
             loop {
                 tokio::select! {
                     biased;
@@ -244,8 +253,16 @@ impl LockFile {
                     // on change.
                     Some(msg) = rx.recv() => {
                         if msg != *state.lockfile.read().await {
+                            if let Some(ref lockfile) = msg {
+                                let mut lock = state.client.write().await;
+                                if let Ok(client) = http::client(lockfile) {
+                                    *lock = Some(client);
+                                }
+                            }
+                            {
                             let mut lock = state.lockfile.write().await;
                             *lock = msg.clone();
+                                }
                         }
 
                         match msg {

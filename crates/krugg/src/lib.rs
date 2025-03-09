@@ -1,9 +1,12 @@
 #![warn(clippy::all, clippy::nursery, rust_2018_idioms)]
 #![doc = include_str!("../../../README.md")]
 
-use krugg_model::AppState;
+use std::time::Duration;
+
+use krugg_model::{AppState, STORE_FILE};
 use tauri::{Manager, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_store::StoreExt;
 
 mod commands;
 
@@ -30,6 +33,11 @@ pub fn run() {
         .setup(|app| {
             // Setup app state.
             app.manage(AppState {});
+
+            // Setup persistent store.
+            app.store_builder(STORE_FILE)
+                .auto_save(Duration::from_secs(60))
+                .build()?;
 
             // Tray-relative window positioning.
             TrayIconBuilder::new()

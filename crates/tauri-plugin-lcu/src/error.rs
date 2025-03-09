@@ -13,6 +13,9 @@ pub enum Error {
     #[error("command output status code {0:?}")]
     Command(Option<i32>),
 
+    #[error("parsing command output")]
+    ParseCommand,
+
     #[error(transparent)]
     Utf8(#[from] std::str::Utf8Error),
 
@@ -21,6 +24,12 @@ pub enum Error {
 
     #[error(transparent)]
     Store(#[from] tauri_plugin_store::Error),
+
+    #[error(transparent)]
+    InvalidHeaderValue(#[from] tauri_plugin_http::reqwest::header::InvalidHeaderValue),
+
+    #[error(transparent)]
+    Reqwest(#[from] tauri_plugin_http::reqwest::Error),
 }
 
 impl Serialize for Error {

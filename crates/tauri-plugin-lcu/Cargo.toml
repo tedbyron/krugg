@@ -17,6 +17,14 @@ krugg-model = { version = "0.1.0", path = "../krugg-model" }
 notify-debouncer-full = "0.5.0"
 serde = { version = "1.0.218", features = ["derive"] }
 tauri = "2.3.1"
+tauri-plugin-http = { version = "2.3.0", default-features = false, features = [
+    "charset",
+    "cookies",
+    "http2",
+    "json",
+    "macos-system-configuration",
+    "native-tls"
+] }
 tauri-plugin-shell = "2.2.0"
 tauri-plugin-store = "2.2.0"
 thiserror = "2.0.12"
