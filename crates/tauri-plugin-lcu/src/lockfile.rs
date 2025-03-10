@@ -121,44 +121,32 @@ impl LockFile {
 
     /// Retrieve the lockfile path from the running League client.
     #[cfg(target_os = "macos")]
-    async fn path<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf> {
-        use tauri_plugin_shell::process::CommandEvent;
-
+    async fn path<R: Runtime>(app: &AppHandle<R>) -> crate::Result<PathBuf> {
         let shell = app.shell();
         let output = shell.command("ps").args(["-xo", "args="]).output().await?;
         if output.status.code() != Some(0) {
-            return Err(Error::Command(output.status.code()));
+            return Err(crate::Error::Command(output.status.code()));
         }
-        dbg!(str::from_utf8(&output.stdout));
-        // let (mut rx, mut child) = shell.command("grep").arg("LeagueClientUx").spawn()?;
-        // child.write(&output.stdout)?;
-        // let mut buf = vec![];
-        // loop {
-        //     match rx.recv().await {
-        //         Some(CommandEvent::Stdout(output)) => {
-        //             buf.extend_from_slice(&output);
-        //         }
-        //         Some(CommandEvent::Terminated(_)) | None => {
-        //             break;
-        //         }
-        //         Some(_) => (),
-        //     }
-        // }
 
-        // let cmd = str::from_utf8(&buf)?;
-        // dbg!(&cmd);
-        // let quote_positions = cmd
-        //     .chars()
-        //     .enumerate()
-        //     .filter_map(|(i, c)| if c == '"' { Some(i) } else { None })
-        //     .collect::<Box<[_]>>();
-        // let argv = quote_positions
-        //     .chunks_exact(2)
-        //     .map(|chunk| &cmd[chunk[0] + 1..chunk[1]])
-        //     .collect::<Box<[_]>>();
-        // let exe_path = Path::new(&argv[0]);
+        let cmd = str::from_utf8(&output.stdout)?
+            .lines()
+            .filter_map(|line| {
+                if line.contains("LeagueClientUx") {
+                    Some(line.trim_ascii())
+                } else {
+                    None
+                }
+            })
+            .collect::<Box<[_]>>();
+        let idx = cmd
+            .first()
+            .ok_or(crate::Error::ParseCommand)?
+            .find("LeagueClientUx")
+            .ok_or(crate::Error::ParseCommand)?;
+        let exe_dir = Path::new(&cmd[0][..idx]);
+        dbg!(&exe_dir);
 
-        Ok(PathBuf::new())
+        Ok(exe_dir.join("lockfile"))
     }
 
     /// Parse the lockfile contents. Saves the lockfile path to the store if
@@ -263,8 +251,9 @@ impl LockFile {
                 },
             )
             .unwrap();
+            // TODO: panics if the lockfile path is set but path doesn't exist
+            //       yet (client not open).
             watcher.watch(&path, RecursiveMode::NonRecursive).unwrap();
-            rx.close();
 
             let state = app.state::<LcuState>();
             loop {

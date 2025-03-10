@@ -29,26 +29,6 @@
         }
       ]
     },
-    {
-      "identifier": "shell:allow-spawn",
-      "allow": [
-        {
-          "name": "grep",
-          "cmd": "grep",
-          "args": ["LeagueClientUx"]
-        }
-      ]
-    },
-    {
-      "identifier": "shell:allow-stdin-write",
-      "allow": [
-        {
-          "name": "grep",
-          "cmd": "grep",
-          "args": ["LeagueClientUx"]
-        }
-      ]
-    },
     "store:default"
   ]
 }

@@ -12,7 +12,7 @@ use ugg_types::{
 
 use crate::{Lcu, LcuState, lockfile::LockFile};
 
-const ROOT_CERT: &[u8] = include_bytes!("./riotgames.pem");
+const ROOT_CERT: &[u8] = include_bytes!("./riotgames.pem").trim_ascii();
 
 trait ResultExt<T> {
     async fn check_status(self) -> crate::Result<T>;

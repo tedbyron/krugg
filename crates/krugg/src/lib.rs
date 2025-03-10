@@ -53,6 +53,9 @@ pub fn run() {
                 })
                 .build(app)?;
 
+            #[cfg(debug_assertions)]
+            app.get_webview_window("main").unwrap().open_devtools();
+
             Ok(())
         })
         .run(tauri::generate_context!())
