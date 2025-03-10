@@ -12,7 +12,7 @@ repository = "https://github.com/tedbyron/krugg"
 name = "krugg_lib"
 
 [build-dependencies]
-tauri-build = { version = "2.0.6", features = [] }
+tauri-build = "2.0.6"
 
 [dependencies]
 serde = { version = "1.0.218", features = ["derive"] }

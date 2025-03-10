@@ -25,6 +25,9 @@ pub enum Error {
     ParseCommand,
 
     #[error(transparent)]
+    Tauri(#[from] tauri::Error),
+
+    #[error(transparent)]
     Store(#[from] tauri_plugin_store::Error),
 
     #[error(transparent)]

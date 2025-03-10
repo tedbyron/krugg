@@ -208,15 +208,18 @@ impl LockFile {
 
         // Update state if possible before starting the file watcher.
         if let Some(lockfile) = Self::parse(app, &path) {
-            _ = app.emit("lcu-lockfile", lockfile.clone());
             let state = app.state::<LcuState>();
             {
-                let mut lock = state.client.blocking_lock();
-                *lock = Some(crate::http::client(&lockfile)?);
-            }
-            {
                 let mut lock = state.lockfile.blocking_write();
-                *lock = Some(lockfile);
+                *lock = Some(lockfile.clone());
+            }
+            app.emit("lcu-lockfile", lockfile.clone())?;
+            if let Ok(client) = crate::http::client(&lockfile) {
+                {
+                    let mut lock = state.client.blocking_lock();
+                    *lock = Some(client);
+                }
+                app.emit("lcu-connected", ())?;
             }
         }
 
@@ -274,7 +277,7 @@ impl LockFile {
                             if Some(lockfile) != state.lockfile.read().await.as_ref() {
                                 {
                                     let mut lock = state.lockfile.write().await;
-                                    (*lock).clone_from(msg);
+                                    lock.clone_from(msg);
                                 }
                                 _ = app.emit("lcu-lockfile", lockfile);
                                 if let Ok(client) = crate::http::client(lockfile) {
