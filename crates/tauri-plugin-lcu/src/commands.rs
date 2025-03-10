@@ -28,7 +28,7 @@ pub async fn post<R: Runtime>(
     path: &str,
     body: Value,
 ) -> crate::Result<Response> {
-    app.lcu().post(path, body).await
+    app.lcu().post(path, &body).await
 }
 
 /// Send a PUT request.
@@ -38,7 +38,7 @@ pub async fn put<R: Runtime>(
     path: &str,
     body: Value,
 ) -> crate::Result<Response> {
-    app.lcu().put(path, body).await
+    app.lcu().put(path, &body).await
 }
 
 /// Send a DELETE request.
@@ -54,7 +54,7 @@ pub async fn patch<R: Runtime>(
     path: &str,
     body: Value,
 ) -> crate::Result<Response> {
-    app.lcu().patch(path, body).await
+    app.lcu().patch(path, &body).await
 }
 
 /// Get the current summoner.

@@ -44,7 +44,6 @@ pub enum Error {
     #[error("not connected to the LCU")]
     Disconnected,
 
-    /// Error that isn't reused anywhere else.
     #[error("{0}")]
     Custom(&'static str),
 }

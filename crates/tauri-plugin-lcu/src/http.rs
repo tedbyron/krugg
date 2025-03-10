@@ -1,7 +1,7 @@
 use serde::{Serialize, de::DeserializeOwned};
 use tauri::{Manager, Runtime};
 use tauri_plugin_http::reqwest::{
-    Certificate, Client, ClientBuilder, Response, Url,
+    Certificate, Client, ClientBuilder, Method, Response, Url,
     header::{self, HeaderMap, HeaderValue},
 };
 #[cfg(feature = "ugg-types")]
@@ -72,87 +72,79 @@ impl<R: Runtime> Lcu<R> {
         Ok(url)
     }
 
-    /// Send a GET request and deserialize the response body as JSON.
-    pub async fn get<T: DeserializeOwned>(&self, path: &str) -> crate::Result<T> {
-        Ok(self
-            .client()
+    /// Send a request to the LCU API.
+    async fn request(&self, method: Method, path: &str) -> crate::Result<Response> {
+        self.client()
             .await?
-            .get(self.url(path).await?)
+            .request(method, self.url(path).await?)
             .send()
             .await
             .check_status()
+            .await
+    }
+
+    /// Send a request to the LCU API with a JSON body.
+    async fn request_with_body<T: Serialize + ?Sized + Sync>(
+        &self,
+        method: Method,
+        path: &str,
+        body: &T,
+    ) -> crate::Result<Response> {
+        self.client()
             .await?
-            .json()
-            .await?)
+            .request(method, self.url(path).await?)
+            .json(&body)
+            .send()
+            .await
+            .check_status()
+            .await
+    }
+
+    /// Send a GET request and deserialize the response body as JSON.
+    pub async fn get<T: DeserializeOwned>(&self, path: &str) -> crate::Result<T> {
+        Ok(self.request(Method::GET, path).await?.json().await?)
     }
 
     /// Send a GET request and return the raw response.
     pub async fn get_raw(&self, path: &str) -> crate::Result<Response> {
-        self.client()
-            .await?
-            .get(self.url(path).await?)
-            .send()
-            .await
-            .check_status()
-            .await
+        self.request(Method::GET, path).await
     }
 
     /// Send a HEAD request.
     pub async fn head(&self, path: &str) -> crate::Result<Response> {
-        self.client()
-            .await?
-            .head(self.url(path).await?)
-            .send()
-            .await
-            .check_status()
-            .await
+        self.request(Method::HEAD, path).await
     }
 
     /// Send a POST request.
-    pub async fn post<T: Serialize>(&self, path: &str, body: T) -> crate::Result<Response> {
-        self.client()
-            .await?
-            .post(self.url(path).await?)
-            .json(&body)
-            .send()
-            .await
-            .check_status()
-            .await
+    pub async fn post<T: Serialize + ?Sized + Sync>(
+        &self,
+        path: &str,
+        body: &T,
+    ) -> crate::Result<Response> {
+        self.request_with_body(Method::POST, path, body).await
     }
 
     /// Send a PUT request.
-    pub async fn put<T: Serialize>(&self, path: &str, body: T) -> crate::Result<Response> {
-        self.client()
-            .await?
-            .put(self.url(path).await?)
-            .json(&body)
-            .send()
-            .await
-            .check_status()
-            .await
+    pub async fn put<T: Serialize + ?Sized + Sync>(
+        &self,
+        path: &str,
+        body: &T,
+    ) -> crate::Result<Response> {
+        self.request_with_body(Method::PUT, path, body).await
     }
 
     /// Send a DELETE request.
     pub async fn delete(&self, path: &str) -> crate::Result<Response> {
-        self.client()
-            .await?
-            .delete(self.url(path).await?)
-            .send()
-            .await
-            .check_status()
-            .await
+        self.request(Method::DELETE, path).await
     }
 
     /// Send a PATCH request.
-    pub async fn patch<T: Serialize>(&self, path: &str, body: T) -> crate::Result<Response> {
-        self.client()
-            .await?
-            .patch(self.url(path).await?)
-            .json(&body)
-            .send()
-            .await
-            .check_status()
-            .await
+    pub async fn patch<T: Serialize + ?Sized + Sync>(
+        &self,
+        path: &str,
+        body: &T,
+    ) -> crate::Result<Response> {
+        self.request_with_body(Method::PATCH, path, body).await
     }
 
     /// Get the current summoner.

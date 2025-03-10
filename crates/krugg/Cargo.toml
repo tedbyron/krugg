@@ -8,11 +8,8 @@ authors = ["ted@ted.ooo"]
 repository = "https://github.com/tedbyron/krugg"
 
 [lib]
-# The `_lib` suffix may seem redundant but it is necessary
-# to make the lib name unique and wouldn't conflict with the bin name.
-# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+# https://github.com/rust-lang/cargo/issues/8519
 name = "krugg_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.0.6", features = [] }
@@ -23,20 +20,18 @@ serde_json = "1.0.140"
 tauri = { version = "2.3.1", features = ["native-tls"] }
 tauri-plugin-autostart = "2.2.0"
 tauri-plugin-global-shortcut = "2.2.0"
-tauri-plugin-http = { version = "2.3.0", default-features = false, features = [
-    "charset",
-    "cookies",
-    "http2",
-    "json",
-    "macos-system-configuration",
-    "native-tls"
-] }
-tauri-plugin-lcu = { version = "0.1.0", path = "../tauri-plugin-lcu", features = [
-    "tauri-plugin-store",
-    "ugg-types"
-] }
 tauri-plugin-opener = "2.2.6"
 tauri-plugin-positioner = { version = "2.2.0", features = ["tray-icon"] }
 tauri-plugin-shell = "2.2.0"
 tauri-plugin-single-instance = "2.2.2"
 tauri-plugin-store = "2.2.0"
+
+[dependencies.tauri-plugin-http]
+version = "2.3.0"
+default-features = false
+features = ["charset", "cookies", "http2", "json", "macos-system-configuration", "native-tls"]
+
+[dependencies.tauri-plugin-lcu]
+version = "0.1.0"
+path = "../tauri-plugin-lcu"
+features = ["tauri-plugin-store", "ugg-types"]

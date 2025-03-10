@@ -32,12 +32,14 @@ impl<R: Runtime, T: Manager<R>> LcuExt<R> for T {
     }
 }
 
+/// Tauri managed plugin state.
+#[derive(Debug)]
 struct LcuState {
     /// Persistent store file.
     store_file: Option<String>,
     /// LCU lockfile.
     lockfile: RwLock<Option<lockfile::LockFile>>,
-    /// Reusable HTTP client.
+    /// HTTP client.
     client: Mutex<Option<Client>>,
     /// Used to cancel all tasks when the plugin is dropped.
     cancel_token: CancellationToken,

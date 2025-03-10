@@ -22,17 +22,18 @@ notify-debouncer-full = "0.5.0"
 serde = { version = "1.0.218", features = ["derive"] }
 serde_json = "1.0.140"
 tauri = "2.3.1"
-tauri-plugin-http = { version = "2.3.0", default-features = false, features = [
-    "charset",
-    "cookies",
-    "http2",
-    "json",
-    "macos-system-configuration",
-    "native-tls"
-] }
 tauri-plugin-shell = "2.2.0"
 tauri-plugin-store = { version = "2.2.0", optional = true }
 thiserror = "2.0.12"
-tokio = { version = "1.44.0", default-features = false, features = ["time"] }
 tokio-util = { version = "0.7.13", features = ["rt"] }
 ugg-types = { version = "0.7.0", optional = true }
+
+[dependencies.tauri-plugin-http]
+version = "2.3.0"
+default-features = false
+features = ["charset", "cookies", "http2", "json", "macos-system-configuration", "native-tls"]
+
+[dependencies.tokio]
+version = "1.44.0"
+default-features = false
+features = ["rt", "rt-multi-thread", "time"]

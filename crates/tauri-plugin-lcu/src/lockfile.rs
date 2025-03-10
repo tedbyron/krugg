@@ -1,6 +1,7 @@
 use std::{
     fs,
     net::Ipv4Addr,
+    panic,
     path::{Path, PathBuf},
     sync::LazyLock,
 };
