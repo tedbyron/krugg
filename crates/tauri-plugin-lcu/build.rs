@@ -1,4 +1,4 @@
-#![warn(clippy::all, clippy::nursery, rust_2018_idioms)]
+#![deny(clippy::all, clippy::nursery, rust_2018_idioms)]
 
 #[cfg(not(feature = "ugg-types"))]
 const COMMANDS: &[&str] = &["get", "head", "post", "put", "delete", "patch"];

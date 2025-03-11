@@ -1,7 +1,7 @@
-use tauri::{Error, Manager, Result, Window};
+use tauri::{Error, Manager, Window};
 
-#[tauri::command]
-pub fn show_main_window(window: Window) -> Result<()> {
+#[tauri::command(async)]
+pub fn show_main_window(window: Window) -> tauri::Result<()> {
     if matches!(window.is_visible(), Ok(false)) {
         window
             .get_webview_window("main")

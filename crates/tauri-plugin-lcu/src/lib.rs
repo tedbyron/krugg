@@ -1,12 +1,12 @@
-#![warn(clippy::all, clippy::nursery, rust_2018_idioms)]
+#![deny(clippy::all, clippy::nursery, rust_2018_idioms)]
 #![doc = include_str!("../README.md")]
 
 use tauri::{
     AppHandle, Manager, Runtime,
-    async_runtime::{self, Mutex, RwLock},
+    async_runtime::{self, RwLock},
     plugin::{Builder, TauriPlugin},
 };
-use tauri_plugin_http::reqwest::Client;
+use tauri_plugin_http::reqwest::{Client, Url};
 use tokio::task;
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
 
@@ -16,6 +16,7 @@ mod http;
 mod lockfile;
 
 pub use error::{Error, Result};
+use lockfile::LockFile;
 
 /// Access to the LCU APIs.
 pub struct Lcu<R: Runtime>(AppHandle<R>);
@@ -32,15 +33,16 @@ impl<R: Runtime, T: Manager<R>> LcuExt<R> for T {
     }
 }
 
-/// Tauri managed plugin state.
 #[derive(Debug)]
 struct LcuState {
     /// Persistent store file.
     store_file: Option<String>,
     /// LCU lockfile.
-    lockfile: RwLock<Option<lockfile::LockFile>>,
+    lockfile: RwLock<Option<LockFile>>,
+    /// LCU API base URL, including protocol, hostname, and port.
+    base_url: RwLock<Option<Url>>,
     /// HTTP client.
-    client: Mutex<Option<Client>>,
+    client: RwLock<Option<Client>>,
     /// Used to cancel all tasks when the plugin is dropped.
     cancel_token: CancellationToken,
     /// Used to wait for all tasks to complete before dropping the plugin.
@@ -57,27 +59,29 @@ pub fn init<R: Runtime, S: ToString>(store_file: Option<S>) -> TauriPlugin<R> {
 
     Builder::new("lcu")
         .invoke_handler(tauri::generate_handler![])
-        .setup(|app, _api| {
+        .setup(|app, _| {
             let lcu = Lcu(app.clone());
             app.manage(lcu);
             app.manage(LcuState {
                 store_file,
                 lockfile: RwLock::new(None),
-                client: Mutex::new(None),
+                base_url: RwLock::new(None),
+                client: RwLock::new(None),
                 cancel_token: CancellationToken::new(),
                 tracker: TaskTracker::new(),
             });
 
-            lockfile::LockFile::watch(app)?;
+            LockFile::watch(app)?;
 
             Ok(())
         })
         .on_drop(|app| {
             let state = app.state::<LcuState>();
             state.cancel_token.cancel();
+            state.tracker.close();
 
             task::block_in_place(move || {
-                async_runtime::block_on(async move {
+                async_runtime::block_on(async {
                     state.tracker.wait().await;
                 });
             });

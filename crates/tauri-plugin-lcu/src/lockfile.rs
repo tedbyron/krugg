@@ -8,10 +8,10 @@ use std::{
 
 use base64ct::{Base64, Encoding};
 use notify_debouncer_full::{
-    DebounceEventResult,
-    notify::{EventKind, RecursiveMode},
+    DebounceEventResult, Debouncer,
+    notify::{self, EventKind, RecursiveMode},
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, Runtime, async_runtime};
 use tauri_plugin_http::reqwest::Url;
 use tauri_plugin_shell::ShellExt;
@@ -30,8 +30,7 @@ const USERNAME: &str = "riot";
 static BASE_URL: LazyLock<Url> =
     LazyLock::new(|| Url::parse(&format!("https://{}", Ipv4Addr::LOCALHOST)).unwrap());
 
-/// LCU lockfile.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LockFile {
     /// Path to the lockfile.
@@ -40,13 +39,14 @@ pub struct LockFile {
     pub pid: u32,
     /// HTTP port.
     pub port: u16,
-    /// LCU API base URL, including protocol, hostname, and port.
-    pub base_url: Url,
     /// HTTP auth password.
     pub token: String,
     /// HTTP basic auth header value.
     pub auth_header: String,
 }
+
+type Watcher = Debouncer<notify::RecommendedWatcher, notify_debouncer_full::RecommendedCache>;
+type Receiver = async_runtime::Receiver<Option<(LockFile, Url)>>;
 
 impl LockFile {
     /// Retrieve the lockfile path from the store.
@@ -138,12 +138,12 @@ impl LockFile {
                 }
             })
             .collect::<Box<[_]>>();
-        let idx = cmd
+        let position = cmd
             .first()
             .ok_or(crate::Error::ParseCommand)?
             .find("LeagueClientUx")
             .ok_or(crate::Error::ParseCommand)?;
-        let exe_dir = Path::new(&cmd[0][..idx]);
+        let exe_dir = Path::new(&cmd[0][..position]);
         dbg!(&exe_dir);
 
         Ok(exe_dir.join("lockfile"))
@@ -151,7 +151,7 @@ impl LockFile {
 
     /// Parse the lockfile contents. Saves the lockfile path to the store if
     /// the plugin state's `store_file` field is set.
-    fn parse<R: Runtime>(app: &AppHandle<R>, path: impl AsRef<Path>) -> Option<Self> {
+    fn parse<R: Runtime>(app: &AppHandle<R>, path: impl AsRef<Path>) -> Option<(Self, Url)> {
         let path = path.as_ref();
         let lockfile = fs::read_to_string(path).ok()?;
         let parts = lockfile.split(':').collect::<Box<[_]>>();
@@ -176,24 +176,83 @@ impl LockFile {
             }
         }
 
-        Some(Self {
-            path: path.to_owned(),
-            pid,
-            port,
+        Some((
+            Self {
+                path: path.to_owned(),
+                pid,
+                port,
+                token,
+                auth_header,
+            },
             base_url,
-            token,
-            auth_header,
-        })
+        ))
+    }
+
+    /// Watch for changes to the lockfile using the debounced watcher so the
+    /// lockfile isn't read until it has contents. The channel and watcher need
+    /// to live for the duration of the task.
+    fn watcher<R: Runtime>(app: &AppHandle<R>, path: &Path) -> notify::Result<(Watcher, Receiver)> {
+        let app = app.clone();
+        let path = path.to_owned();
+        let (tx, rx) = async_runtime::channel(1);
+        let watcher = notify_debouncer_full::new_debouncer(
+            Duration::from_secs(1),
+            None,
+            move |res: DebounceEventResult| {
+                async_runtime::block_on(async {
+                    if let Ok(events) = res {
+                        for evt in events {
+                            match evt.kind {
+                                EventKind::Modify(_) => {
+                                    _ = tx.send(Self::parse(&app, &path)).await;
+                                    break;
+                                }
+                                EventKind::Remove(_) => {
+                                    _ = tx.send(None).await;
+                                    break;
+                                }
+                                _ => (),
+                            }
+                        }
+                    }
+                });
+            },
+        )?;
+
+        Ok((watcher, rx))
+    }
+
+    /// Update [`LcuState`] `lockfile`, `base_url`, and `client` fields.
+    async fn update_state<R: Runtime>(app: &AppHandle<R>, lockfile: Self, url: Url) {
+        let state = app.state::<LcuState>();
+        {
+            let mut lock = state.lockfile.write().await;
+            *lock = Some(lockfile.clone());
+        }
+        _ = app.emit("lcu-lockfile", &lockfile);
+        _ = app.emit("lcu-base-url", url.as_str());
+        {
+            let mut lock = state.base_url.write().await;
+            *lock = Some(url);
+        }
+        if let Ok(client) = crate::http::client(&lockfile) {
+            {
+                let mut lock = state.client.write().await;
+                *lock = Some(client);
+            }
+            _ = app.emit("lcu-connected", ());
+        }
     }
 
     /// Watch for file system changes to the LCU lockfile.
     pub fn watch<R: Runtime>(app: &AppHandle<R>) -> crate::Result<()> {
         // Get the lockfile path from the store or call Self::path every 5
         // seconds until it returns a path.
+        let state = app.state::<LcuState>();
         let path = Self::path_from_store(app).unwrap_or_else(|| {
             // TODO: don't block main thread lol.
             task::block_in_place(move || {
-                async_runtime::block_on(async move {
+                async_runtime::block_on(state.tracker.track_future(async {
                     let mut interval = time::interval(Duration::from_secs(5));
 
                     loop {
@@ -202,59 +261,24 @@ impl LockFile {
                         }
                         interval.tick().await;
                     }
-                })
+                }))
             })
         });
 
         // Update state if possible before starting the file watcher.
-        if let Some(lockfile) = Self::parse(app, &path) {
-            let state = app.state::<LcuState>();
-            {
-                let mut lock = state.lockfile.blocking_write();
-                *lock = Some(lockfile.clone());
-            }
-            app.emit("lcu-lockfile", lockfile.clone())?;
-            if let Ok(client) = crate::http::client(&lockfile) {
-                {
-                    let mut lock = state.client.blocking_lock();
-                    *lock = Some(client);
-                }
-                app.emit("lcu-connected", ())?;
-            }
+        let state = app.state::<LcuState>();
+        if let Some((lockfile, url)) = Self::parse(app, &path) {
+            async_runtime::block_on(state.tracker.track_future(async {
+                Self::update_state(app, lockfile, url).await;
+            }));
         }
 
         // Spawn a background task to update state when the lockfile changes.
-        let state = app.state::<LcuState>();
         let cancel_token = state.cancel_token.clone();
         let app = app.clone();
         async_runtime::spawn(state.tracker.track_future(async move {
-            // Watch for changes to the lockfile using the debounced watcher
-            // so the lockfile isn't read until it has contents. The channel
-            // and watcher need to live for the duration of the task.
-            let (tx, mut rx) = async_runtime::channel(1);
-            let p = path.clone();
-            let handle = app.clone();
-            let mut watcher = notify_debouncer_full::new_debouncer(
-                Duration::from_secs(1),
-                None,
-                move |res: DebounceEventResult| {
-                    if let Ok(events) = res {
-                        if let Some(evt) = events.first() {
-                            match evt.kind {
-                                EventKind::Modify(_) => {
-                                    _ = tx.blocking_send(Self::parse(&handle, &p));
-                                }
-                                EventKind::Remove(_) => {
-                                    _ = tx.blocking_send(None);
-                                }
-                                _ => (),
-                            }
-                        }
-                    }
-                },
-            )
-            .unwrap();
-            // TODO: panics if the lockfile path is set but path doesn't exist
+            let (mut watcher, mut rx) = Self::watcher(&app, &path).unwrap();
+            // TODO: panics if the lockfile path is set but file doesn't exist
             //       yet (client not open).
             watcher.watch(&path, RecursiveMode::NonRecursive).unwrap();
 
@@ -262,34 +286,20 @@ impl LockFile {
             loop {
                 tokio::select! {
                     biased;
-                    // Unwatch the path, close and drain the channel, and break
-                    // from the loop.
+                    // Unwatch the path and close the channel when canceled.
                     () = cancel_token.cancelled() => {
                         _ = watcher.unwatch(&path);
                         rx.close();
                         while rx.recv().await.is_some() {}
                         break;
                     }
-                    // Update state and emit the lockfile to the frontend
-                    // on change.
-                    Some(ref msg) = rx.recv() => {
-                        if let Some(lockfile) = msg {
-                            if Some(lockfile) != state.lockfile.read().await.as_ref() {
-                                {
-                                    let mut lock = state.lockfile.write().await;
-                                    lock.clone_from(msg);
-                                }
-                                _ = app.emit("lcu-lockfile", lockfile);
-                                if let Ok(client) = crate::http::client(lockfile) {
-                                    {
-                                        let mut lock = state.client.lock().await;
-                                        *lock = Some(client);
-                                    }
-                                    _ = app.emit("lcu-connected", ());
-                                }
+                    // Update state when the lockfile is modified.
+                    Some(msg) = rx.recv() => {
+                        if let Some((lockfile, url)) = msg {
+                            if Some(&lockfile) != state.lockfile.read().await.as_ref() {
+                                Self::update_state(&app, lockfile, url).await;
                             }
                         } else {
-                            _ = app.emit("lcu-lockfile", ());
                             _ = app.emit("lcu-disconnected", ());
                         }
                     }

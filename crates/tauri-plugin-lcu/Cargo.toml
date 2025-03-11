@@ -8,18 +8,6 @@ authors = ["ted@ted.ooo"]
 repository = "https://github.com/tedbyron/krugg"
 links = "tauri-plugin-lcu"
 
-[features]
-default = ["native-tls"]
-native-tls = ["tauri-plugin-http/native-tls"]
-native-tls-alpn = ["tauri-plugin-http/native-tls-alpn"]
-native-tls-vendored = ["tauri-plugin-http/native-tls-vendored"]
-rustls-tls = ["tauri-plugin-http/rustls-tls"]
-rustls-tls-manual-roots = ["tauri-plugin-http/rustls-tls-manual-roots"]
-rustls-tls-native-roots = ["tauri-plugin-http/rustls-tls-native-roots"]
-rustls-tls-webpki-roots = ["tauri-plugin-http/rustls-tls-webpki-roots"]
-tauri-plugin-store = ["dep:tauri-plugin-store"]
-ugg-types = ["dep:ugg-types"]
-
 [build-dependencies]
 tauri-plugin = { version = "2.0.5", features = ["build"] }
 
@@ -44,3 +32,15 @@ features = ["charset", "cookies", "http2", "json", "macos-system-configuration"]
 version = "1.44.0"
 default-features = false
 features = ["rt", "rt-multi-thread", "time"]
+
+[features]
+default = ["native-tls"]
+native-tls = ["tauri-plugin-http/native-tls"]
+native-tls-alpn = ["tauri-plugin-http/native-tls-alpn"]
+native-tls-vendored = ["tauri-plugin-http/native-tls-vendored"]
+rustls-tls = ["tauri-plugin-http/rustls-tls"]
+rustls-tls-manual-roots = ["tauri-plugin-http/rustls-tls-manual-roots"]
+rustls-tls-native-roots = ["tauri-plugin-http/rustls-tls-native-roots"]
+rustls-tls-webpki-roots = ["tauri-plugin-http/rustls-tls-webpki-roots"]
+tauri-plugin-store = ["dep:tauri-plugin-store"]
+ugg-types = ["dep:ugg-types"]

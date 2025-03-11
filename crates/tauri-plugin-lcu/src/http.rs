@@ -41,8 +41,8 @@ pub fn client(lockfile: &LockFile) -> crate::Result<Client> {
 
     Ok(ClientBuilder::new()
         .https_only(true)
-        .add_root_certificate(Certificate::from_pem(ROOT_CERT)?)
         .tls_built_in_root_certs(false)
+        .add_root_certificate(Certificate::from_pem(ROOT_CERT)?)
         .default_headers(headers)
         .build()?)
 }
@@ -51,7 +51,7 @@ impl<R: Runtime> Lcu<R> {
     /// Returns the HTTP client if available.
     async fn client(&self) -> crate::Result<Client> {
         let state = self.0.state::<LcuState>();
-        let lock = state.client.lock().await;
+        let lock = state.client.read().await;
         lock.as_ref()
             .map_or(Err(crate::Error::Disconnected), |client| Ok(client.clone()))
     }
@@ -60,9 +60,9 @@ impl<R: Runtime> Lcu<R> {
     pub async fn url(&self, path: &str) -> crate::Result<Url> {
         let state = self.0.state::<LcuState>();
         let mut url = {
-            let lock = state.lockfile.read().await;
+            let lock = state.base_url.read().await;
             match &*lock {
-                Some(lockfile) => lockfile.base_url.clone(),
+                Some(url) => url.clone(),
                 None => {
                     return Err(crate::Error::Disconnected);
                 }

@@ -9,8 +9,11 @@ League of Legends client (LCU) API client for tauri.
 
 - Available commands: see [`build.rs`](./build.rs)
 - Emitted messages:
-  - `lcu-lockfile` with value of `lockfile::LockFile` or `null` if the game
-    client isn't running
+  - `lcu-lockfile` with value of [`crate::lockfile::LockFile`](https://docs.rs/tauri-plugin-lcu/latest/tauri-plugin-lcu/lockfile/struct.LockFile.html) if the game client is
+    running
+  - `lcu-base-url` with value of [`url::Url`](https://docs.rs/url/latest/url/struct.Url.html),
+    including protocol, hostname,
+    and port, if the game client is running
   - `lcu-connected` if the game client is running and an http client was
     successfully created to connect to it
   - `lcu-disconnected` if the game client isn't running
