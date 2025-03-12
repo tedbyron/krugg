@@ -2,7 +2,6 @@ import { fileURLToPath } from 'node:url'
 
 import { includeIgnoreFile } from '@eslint/compat'
 import js from '@eslint/js'
-// @ts-expect-error: missing types.
 import prettier from 'eslint-config-prettier'
 import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
@@ -12,25 +11,24 @@ const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url))
 
 export default ts.config(
   includeIgnoreFile(gitignorePath),
-  {
-    ignores: [
-      '**/.DS_Store',
-      '**/node_modules',
-      '**/build',
-      '.svelte-kit',
-      '**/package',
-      '**/.env',
-      '**/.env.*',
-      '!**/.env.example',
-      '**/package-lock.json',
-    ],
-  },
+  // {
+  //   ignores: [
+  //     '**/.DS_Store',
+  //     '**/node_modules',
+  //     '**/build',
+  //     '.svelte-kit',
+  //     '**/package',
+  //     '**/.env',
+  //     '**/.env.*',
+  //     '!**/.env.example',
+  //     '**/package-lock.json',
+  //   ],
+  // },
   js.configs.recommended,
   ts.configs.eslintRecommended,
   ts.configs.strictTypeChecked,
   ts.configs.stylisticTypeChecked,
   svelte.configs['flat/recommended'],
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   prettier,
   svelte.configs['flat/prettier'],
   {

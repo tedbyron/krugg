@@ -4,12 +4,14 @@
 use std::{borrow::Cow, path::PathBuf, time::Duration};
 
 use mimalloc::MiMalloc;
-use tauri::{Listener, Manager, tray::TrayIconBuilder};
+use tauri::{Listener, Manager, RunEvent, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_store::StoreExt;
+use tokio_util::{sync::CancellationToken, task::TaskTracker};
 
 mod commands;
 mod ddragon;
+mod ugg;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -22,7 +24,12 @@ const EVENTS: [&str; 4] = [
 ];
 
 #[derive(Debug)]
-pub struct AppState {}
+pub struct State {
+    /// Used to cancel all tasks before the app exits.
+    cancel_token: CancellationToken,
+    /// Used to wait for all tasks to complete before the app exits.
+    tracker: TaskTracker,
+}
 
 pub fn run() {
     #[allow(clippy::large_stack_frames)] // generate_context macro is scuffed
@@ -47,7 +54,10 @@ pub fn run() {
         .plugin(tauri_plugin_lcu::init(Some(STORE_FILE)))
         .setup(|app| {
             // Set up app state.
-            app.manage(AppState {});
+            app.manage(State {
+                cancel_token: CancellationToken::new(),
+                tracker: TaskTracker::new(),
+            });
 
             // Set up persistent store.
             app.store_builder(STORE_FILE)
@@ -71,7 +81,7 @@ pub fn run() {
                     let w = win.clone();
                     win.listen(evt, move |evt| {
                         _ = w.eval(&format!(
-                            "console.log('Event: name: {:?}, payload: {}')",
+                            "console.log('Event: id: {:?}, payload: {}')",
                             EVENTS
                                 .get(evt.id() as usize)
                                 .map_or_else(|| Cow::from(evt.id().to_string()), |e| Cow::from(*e)),
@@ -83,6 +93,27 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running the application");
+        .build(tauri::generate_context!())
+        .expect("error while running the application")
+        .run(|app, evt| {
+            match evt {
+                RunEvent::ExitRequested { .. } => {
+                    // Save store, cancel all tasks, and wait for tasks to complete.
+                    if let Ok(store) = app.store(STORE_FILE) {
+                        store.save();
+                    }
+
+                    let state = app.state::<State>();
+                    state.cancel_token.cancel();
+                    state.tracker.close();
+
+                    task::block_in_place(move || {
+                        async_runtime::block_on(async {
+                            state.tracker.wait().await;
+                        });
+                    });
+                }
+                _ => (),
+            }
+        });
 }

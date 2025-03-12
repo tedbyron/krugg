@@ -12,8 +12,6 @@
     "lcu:default",
     "opener:default",
     "positioner:default",
-    "shell:default",
-    "shell:allow-execute",
     {
       "identifier": "shell:allow-execute",
       "allow": [

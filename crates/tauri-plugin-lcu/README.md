@@ -20,6 +20,33 @@ League of Legends client (LCU) API client for tauri.
 
 ### Setup
 
+```jsonc
+// src-tauri/capabilities/default.json
+{
+  // ...
+  "permissions": [
+    "http:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        // Windows
+        {
+          "name": "wmic",
+          "cmd": "WMIC.exe",
+          "args": ["process", "WHERE", "Name='LeagueClientUx.exe'", "GET", "CommandLine"],
+        },
+        // macOS
+        {
+          "name": "ps",
+          "cmd": "ps",
+          "args": ["-xo", "args="],
+        },
+      ],
+    },
+  ],
+}
+```
+
 ```rs
 //! src-tauri/lib.rs
 pub fn run() {
