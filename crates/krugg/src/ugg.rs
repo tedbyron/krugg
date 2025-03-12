@@ -3,6 +3,7 @@ use std::{collections::HashMap, num::NonZeroUsize};
 use anyhow::{anyhow, bail};
 use ddragon::models::{champions::ChampionShort, items::Item, runes::RuneElement};
 use lru::LruCache;
+use reqwest_middleware::ClientWithMiddleware;
 use serde::de::DeserializeOwned;
 use tauri::{AppHandle, Manager, Runtime, async_runtime::Mutex};
 use tauri_plugin_http::reqwest::IntoUrl;
@@ -38,6 +39,7 @@ pub struct Versions {
     ugg: String,
 }
 
+#[derive(Debug)]
 pub struct ClientBuilder<'a> {
     version: Option<&'a str>,
     locale: Option<&'a str>,
@@ -319,6 +321,10 @@ impl Client {
             runes,
             summoner_spells,
         })
+    }
+
+    pub fn client(&self) -> ClientWithMiddleware {
+        self.client.ddragon.client()
     }
 
     pub fn find_champion(&self, name: &str) -> &ChampionShort {
