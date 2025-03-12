@@ -76,6 +76,7 @@ pub fn init<R: Runtime, S: ToString>(store_file: Option<S>) -> TauriPlugin<R> {
             Ok(())
         })
         .on_drop(|app| {
+            // Cancel all tasks and wait for them to complete.
             let state = app.state::<LcuState>();
             state.cancel_token.cancel();
             state.tracker.close();

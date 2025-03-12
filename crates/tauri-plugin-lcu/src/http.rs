@@ -12,7 +12,7 @@ use ugg_types::{
 
 use crate::{Lcu, LcuState, lockfile::LockFile};
 
-const ROOT_CERT: &[u8] = include_bytes!("./riotgames.pem").trim_ascii();
+const ROOT_CERT: &[u8] = include_bytes!("./riotgames.pem");
 
 trait ResultExt<T> {
     async fn check_status(self) -> crate::Result<T>;
@@ -57,7 +57,7 @@ impl<R: Runtime> Lcu<R> {
     }
 
     /// Add a path to the LCU API base URL.
-    pub async fn url(&self, path: &str) -> crate::Result<Url> {
+    async fn url(&self, path: &str) -> crate::Result<Url> {
         let state = self.0.state::<LcuState>();
         let mut url = {
             let lock = state.base_url.read().await;

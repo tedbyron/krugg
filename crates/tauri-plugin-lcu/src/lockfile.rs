@@ -222,7 +222,7 @@ impl LockFile {
         Ok((watcher, rx))
     }
 
-    /// Update [`LcuState`] `lockfile`, `base_url`, and `client` fields.
+    /// Update `LcuState` `lockfile`, `base_url`, and `client` fields.
     async fn update_state<R: Runtime>(app: &AppHandle<R>, lockfile: Self, url: Url) {
         let state = app.state::<LcuState>();
         {

@@ -1,7 +1,7 @@
 #![deny(clippy::all, clippy::nursery, rust_2018_idioms)]
 #![doc = include_str!("../../../README.md")]
 
-use std::{path::PathBuf, time::Duration};
+use std::{borrow::Cow, path::PathBuf, time::Duration};
 
 use mimalloc::MiMalloc;
 use tauri::{Listener, Manager, tray::TrayIconBuilder};
@@ -9,10 +9,10 @@ use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_store::StoreExt;
 
 mod commands;
+mod ddragon;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
-
 const STORE_FILE: &str = "app_data.json";
 const EVENTS: [&str; 4] = [
     "lcu-lockfile",
@@ -22,9 +22,7 @@ const EVENTS: [&str; 4] = [
 ];
 
 #[derive(Debug)]
-pub struct AppState {
-    store_path: PathBuf,
-}
+pub struct AppState {}
 
 pub fn run() {
     #[allow(clippy::large_stack_frames)] // generate_context macro is scuffed
@@ -48,17 +46,13 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_lcu::init(Some(STORE_FILE)))
         .setup(|app| {
+            // Set up app state.
+            app.manage(AppState {});
+
             // Set up persistent store.
             app.store_builder(STORE_FILE)
                 .auto_save(Duration::from_secs(60))
                 .build()?;
-
-            // Set up app state.
-            let store_path = tauri_plugin_store::resolve_store_path(app.handle(), STORE_FILE)?
-                .parent()
-                .unwrap()
-                .to_owned();
-            app.manage(AppState { store_path });
 
             // Tray-relative window positioning.
             TrayIconBuilder::new()
@@ -72,12 +66,15 @@ pub fn run() {
                 // win.open_devtools();
 
                 // Log tauri events to main window console.
+                // TODO: emit messages from plugin after main window ready?
                 for evt in EVENTS {
                     let w = win.clone();
                     win.listen(evt, move |evt| {
                         _ = w.eval(&format!(
-                            "console.log('id: {}, payload: {}')",
-                            evt.id(),
+                            "console.log('Event: name: {:?}, payload: {}')",
+                            EVENTS
+                                .get(evt.id() as usize)
+                                .map_or_else(|| Cow::from(evt.id().to_string()), |e| Cow::from(*e)),
                             evt.payload()
                         ));
                     });
