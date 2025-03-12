@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::{collections::HashMap, num::NonZeroUsize};
 
 use anyhow::{anyhow, bail};
@@ -64,10 +66,13 @@ impl DdragonClientWrapper {
         version: Option<&str>,
         locale: Option<&str>,
     ) -> anyhow::Result<Self> {
-        let client = DdragonClientBuilder::new()
-            .cache(app.path().app_cache_dir()?)
-            .version(version)
-            .locale(locale);
+        let mut client = DdragonClientBuilder::new().cache(app.path().app_cache_dir()?);
+        if let Some(v) = version {
+            client = client.version(v);
+        }
+        if let Some(l) = locale {
+            client = client.locale(l);
+        }
         let cache_size = NonZeroUsize::new(50).unwrap();
 
         Ok(Self {
@@ -75,6 +80,14 @@ impl DdragonClientWrapper {
             overview_cache: Mutex::new(LruCache::new(cache_size)),
             matchup_cache: Mutex::new(LruCache::new(cache_size)),
         })
+    }
+
+    pub fn client(&self) -> ClientWithMiddleware {
+        self.ddragon.client()
+    }
+
+    pub const fn version(&self) -> &str {
+        self.ddragon.version()
     }
 
     async fn get<T: DeserializeOwned, U: IntoUrl>(&self, url: U) -> anyhow::Result<T> {
@@ -86,10 +99,6 @@ impl DdragonClientWrapper {
             .await?
             .json::<T>()
             .await?)
-    }
-
-    pub const fn version(&self) -> &str {
-        self.ddragon.version()
     }
 
     pub async fn get_supported_versions(&self) -> anyhow::Result<Box<[String]>> {
@@ -324,7 +333,11 @@ impl Client {
     }
 
     pub fn client(&self) -> ClientWithMiddleware {
-        self.client.ddragon.client()
+        self.client.client()
+    }
+
+    pub const fn version(&self) -> &str {
+        self.version.as_str()
     }
 
     pub fn find_champion(&self, name: &str) -> &ChampionShort {

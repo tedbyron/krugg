@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::anyhow;
@@ -31,7 +33,7 @@ pub enum ClientType {
 pub struct ClientBuilder<'a> {
     base_url: &'a str,
     client: Option<ClientType>,
-    cache_dir: Option<PathBuf>,
+    cache_path: Option<PathBuf>,
     version: Option<&'a str>,
     locale: Option<&'a str>,
 }
@@ -48,7 +50,7 @@ impl<'a> ClientBuilder<'a> {
         Self {
             base_url: "https://ddragon.leagueoflegends.com",
             client: None,
-            cache_dir: None,
+            cache_path: None,
             version: None,
             locale: None,
         }
@@ -69,18 +71,18 @@ impl<'a> ClientBuilder<'a> {
         self
     }
 
-    pub fn cache<P: Into<PathBuf>>(mut self, cache_dir: P) -> Self {
-        self.cache_dir = Some(cache_dir.into());
+    pub fn cache<P: Into<PathBuf>>(mut self, cache_path: P) -> Self {
+        self.cache_path = Some(cache_path.into());
         self
     }
 
-    pub const fn version(mut self, version: Option<&'a str>) -> Self {
-        self.version = version;
+    pub const fn version(mut self, version: &'a str) -> Self {
+        self.version = Some(version);
         self
     }
 
-    pub const fn locale(mut self, locale: Option<&'a str>) -> Self {
-        self.locale = locale;
+    pub const fn locale(mut self, locale: &'a str) -> Self {
+        self.locale = Some(locale);
         self
     }
 
@@ -106,7 +108,7 @@ impl<'a> ClientBuilder<'a> {
     }
 
     /// Builds the [`Client`]. Adds caching middleware if a
-    /// [`ClientType::Plain`] client was provided with `cache_dir`.
+    /// [`ClientType::Plain`] client was provided with `cache_path`.
     pub async fn build(self) -> anyhow::Result<Client> {
         let client = self
             .client
@@ -133,11 +135,11 @@ impl<'a> ClientBuilder<'a> {
         };
         let middleware_client = match client {
             ClientType::Middleware(client) => client,
-            ClientType::Plain(client) => match self.cache_dir {
-                Some(cache_dir) => MiddlewareClientBuilder::new(client)
+            ClientType::Plain(client) => match self.cache_path {
+                Some(path) => MiddlewareClientBuilder::new(client)
                     .with(Cache(HttpCache {
                         mode: CacheMode::ForceCache,
-                        manager: CACacheManager { path: cache_dir },
+                        manager: CACacheManager { path },
                         options: HttpCacheOptions::default(),
                     }))
                     .build(),
@@ -154,7 +156,7 @@ impl<'a> ClientBuilder<'a> {
     }
 }
 
-macro_rules! create_endpoint {
+macro_rules! impl_endpoint {
     ($name:ident, $kind:literal, $path:literal, $t:ty) => {
         pub async fn $name(&self) -> anyhow::Result<$t> {
             self.get::<$t>(concat!("./", $path, ".json")).await
@@ -163,8 +165,8 @@ macro_rules! create_endpoint {
 }
 
 impl Client {
-    pub async fn new<P: Into<PathBuf>>(cache_dir: P) -> anyhow::Result<Self> {
-        ClientBuilder::new().cache(cache_dir).build().await
+    pub async fn new<P: Into<PathBuf>>(cache_path: P) -> anyhow::Result<Self> {
+        ClientBuilder::new().cache(cache_path).build().await
     }
 
     pub(crate) fn client(&self) -> ClientWithMiddleware {
@@ -199,51 +201,51 @@ impl Client {
             .await?)
     }
 
-    create_endpoint!(challenges, "challenge", "challenges", Challenges);
-    create_endpoint!(champions, "champion", "champion", Champions);
-    create_endpoint!(
+    impl_endpoint!(challenges, "challenge", "challenges", Challenges);
+    impl_endpoint!(champions, "champion", "champion", Champions);
+    impl_endpoint!(
         champions_full,
         "complete champion",
         "championFull",
         ChampionsFull
     );
-    create_endpoint!(items, "item", "item", Items);
-    create_endpoint!(maps, "map", "map", Maps);
-    create_endpoint!(
+    impl_endpoint!(items, "item", "item", Items);
+    impl_endpoint!(maps, "map", "map", Maps);
+    impl_endpoint!(
         mission_assets,
         "mission asset",
         "mission-assets",
         MissionAssets
     );
-    create_endpoint!(profile_icons, "profile icon", "profileicon", ProfileIcons);
-    create_endpoint!(runes, "rune", "runesReforged", Runes);
-    create_endpoint!(spell_buffs, "spell buff", "spellbuffs", SpellBuffs);
-    create_endpoint!(
+    impl_endpoint!(profile_icons, "profile icon", "profileicon", ProfileIcons);
+    impl_endpoint!(runes, "rune", "runesReforged", Runes);
+    impl_endpoint!(spell_buffs, "spell buff", "spellbuffs", SpellBuffs);
+    impl_endpoint!(
         summoner_spells,
         "summoner_spells",
         "summoner",
         SummonerSpells
     );
-    create_endpoint!(translations, "translation", "language", Translations);
-    create_endpoint!(tft_arenas, "TFT arena", "tft-arena", Arenas);
-    create_endpoint!(tft_augments, "TFT augment", "tft-augments", Augments);
-    create_endpoint!(
+    impl_endpoint!(translations, "translation", "language", Translations);
+    impl_endpoint!(tft_arenas, "TFT arena", "tft-arena", Arenas);
+    impl_endpoint!(tft_augments, "TFT augment", "tft-augments", Augments);
+    impl_endpoint!(
         tft_champions,
         "TFT champion",
         "tft-champion",
         tft::Champions
     );
-    create_endpoint!(
+    impl_endpoint!(
         tft_hero_augments,
         "TFT hero augment",
         "tft-hero-augments",
         HeroAugments
     );
-    create_endpoint!(tft_items, "TFT item", "tft-item", tft::Items);
-    create_endpoint!(tft_queues, "TFT queue", "tft-queues", Queues);
-    create_endpoint!(tft_regalia, "TFT regalia", "tft-regalia", Regalia);
-    create_endpoint!(tft_tacticians, "TFT tactician", "tft-tactician", Tacticians);
-    create_endpoint!(tft_traits, "TFT trait", "tft-trait", Traits);
+    impl_endpoint!(tft_items, "TFT item", "tft-item", tft::Items);
+    impl_endpoint!(tft_queues, "TFT queue", "tft-queues", Queues);
+    impl_endpoint!(tft_regalia, "TFT regalia", "tft-regalia", Regalia);
+    impl_endpoint!(tft_tacticians, "TFT tactician", "tft-tactician", Tacticians);
+    impl_endpoint!(tft_traits, "TFT trait", "tft-trait", Traits);
 
     pub async fn champion(&self, key: &str) -> anyhow::Result<Champion> {
         self.get::<ChampionWrapper>(&format!("./champion/{key}.json"))
