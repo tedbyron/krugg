@@ -1,10 +1,11 @@
 #![deny(clippy::all, clippy::nursery, rust_2018_idioms)]
+#![feature(const_vec_string_slice)]
 #![doc = include_str!("../../../README.md")]
 
-use std::{borrow::Cow, path::PathBuf, time::Duration};
+use std::{borrow::Cow, time::Duration};
 
 use mimalloc::MiMalloc;
-use tauri::{Listener, Manager, RunEvent, tray::TrayIconBuilder};
+use tauri::{Listener, Manager, RunEvent, async_runtime, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_store::StoreExt;
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
@@ -96,24 +97,21 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while running the application")
         .run(|app, evt| {
-            match evt {
-                RunEvent::ExitRequested { .. } => {
-                    // Save store, cancel all tasks, and wait for tasks to complete.
-                    if let Ok(store) = app.store(STORE_FILE) {
-                        store.save();
-                    }
-
-                    let state = app.state::<State>();
-                    state.cancel_token.cancel();
-                    state.tracker.close();
-
-                    task::block_in_place(move || {
-                        async_runtime::block_on(async {
-                            state.tracker.wait().await;
-                        });
-                    });
+            if let RunEvent::ExitRequested { .. } = evt {
+                // Save store, cancel all tasks, and wait for tasks to complete.
+                if let Ok(store) = app.store(STORE_FILE) {
+                    _ = store.save();
                 }
-                _ => (),
+
+                let state = app.state::<State>();
+                state.cancel_token.cancel();
+                state.tracker.close();
+
+                tokio::task::block_in_place(move || {
+                    async_runtime::block_on(async {
+                        state.tracker.wait().await;
+                    });
+                });
             }
         });
 }

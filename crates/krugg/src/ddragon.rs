@@ -1,10 +1,9 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::anyhow;
 use ddragon::models::{
     Challenges, Champion, Champions, ChampionsFull, Items, Maps, MissionAssets, ProfileIcons,
     Runes, SpellBuffs, SummonerSpells, Translations,
-    champion::ChampionWrapper,
     shared::HasImage,
     tft::{self, Arenas, Augments, HeroAugments, Queues, Regalia, Tacticians, Traits},
 };
@@ -12,15 +11,14 @@ use http_cache_reqwest::{CACacheManager, Cache, CacheMode, HttpCache, HttpCacheO
 use image::DynamicImage;
 use reqwest_middleware::{ClientBuilder as MiddlewareClientBuilder, ClientWithMiddleware};
 use serde::{Deserialize, de::DeserializeOwned};
-use tauri::{AppHandle, Manager, Runtime};
 use tauri_plugin_http::reqwest::{Client as ReqwestClient, Url};
 
 #[derive(Debug, Clone)]
 pub struct Client {
     client: ClientWithMiddleware,
-    pub version: String,
+    version: String,
     base_url: Url,
-    pub locale: String,
+    locale: String,
 }
 
 #[derive(Debug, Clone)]
@@ -32,35 +30,42 @@ pub enum ClientType {
 #[derive(Debug)]
 pub struct ClientBuilder<'a> {
     base_url: &'a str,
-    client: Option<Client>,
+    client: Option<ClientType>,
     cache_dir: Option<PathBuf>,
     version: Option<&'a str>,
-    locale: &'a str,
+    locale: Option<&'a str>,
+}
+
+#[derive(Deserialize)]
+struct ChampionWrapper {
+    format: String,
+    version: String,
+    data: HashMap<String, Champion>,
 }
 
 impl<'a> ClientBuilder<'a> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             base_url: "https://ddragon.leagueoflegends.com",
             client: None,
             cache_dir: None,
             version: None,
-            locale: "en_US",
+            locale: None,
         }
     }
 
-    pub fn base_url(mut self, base_url: &'a str) -> Self {
+    pub const fn base_url(mut self, base_url: &'a str) -> Self {
         self.base_url = base_url;
         self
     }
 
     pub fn client_with_middleware(mut self, client: ClientWithMiddleware) -> Self {
-        self.client = Some(ClientType::Left(client));
+        self.client = Some(ClientType::Middleware(client));
         self
     }
 
     pub fn client(mut self, client: ReqwestClient) -> Self {
-        self.client = Some(ClientType::Right(client));
+        self.client = Some(ClientType::Plain(client));
         self
     }
 
@@ -69,76 +74,80 @@ impl<'a> ClientBuilder<'a> {
         self
     }
 
-    pub fn version<V: AsRef<str>>(mut self, version: Option<V>) -> Self {
-        self.version = version.map(|v| v.as_ref());
+    pub const fn version(mut self, version: Option<&'a str>) -> Self {
+        self.version = version;
         self
     }
 
-    pub fn locale<L: AsRef<str>>(mut self, locale: L) -> Self {
-        self.locale = locale.as_ref();
+    pub const fn locale(mut self, locale: Option<&'a str>) -> Self {
+        self.locale = locale;
         self
     }
 
-    async fn get<T: Deserialize>(&self, path: &str) -> anyhow::Result<T> {
-        match client {
+    async fn get(client: ClientType, url: Url) -> anyhow::Result<Box<[String]>> {
+        Ok(match client {
             ClientType::Middleware(client) => {
                 client
-                    .get(base_url.join(path)?)
+                    .get(url)
                     .send()
                     .await?
-                    .json::<Box<[str]>>()
+                    .json::<Box<[String]>>()
                     .await?
             }
             ClientType::Plain(client) => {
                 client
-                    .get(base_url.join(path)?)
+                    .get(url)
                     .send()
                     .await?
-                    .json::<Box<[str]>>()
+                    .json::<Box<[String]>>()
                     .await?
             }
-        }
+        })
     }
 
+    /// Builds the [`Client`]. Adds caching middleware if a
+    /// [`ClientType::Plain`] client was provided with `cache_dir`.
     pub async fn build(self) -> anyhow::Result<Client> {
-        let client = match self.client {
-            Some(client) => client,
-            None => ClientType::Plain(ReqwestClient::new()),
-        };
+        let client = self
+            .client
+            .map_or_else(|| ClientType::Plain(ReqwestClient::new()), |client| client);
         let base_url = Url::parse(self.base_url)?;
+        let versions = Self::get(client.clone(), base_url.join("/api/version.json")?).await?;
         let version = match self.version {
-            Some(v) => v,
-            None => self
-                .get::<Box<[str]>>("/api/version.json")
-                .await?
-                .get(0)
+            Some(v) => v.to_string(),
+            None => versions
+                .first()
+                .cloned()
                 .ok_or_else(|| anyhow!("no latest version"))?,
         };
-        let locale = if self.locale == "en_US"
-            || self
-                .get::<Box<[str]>>("/cdn/languages.json")
-                .await?
-                .contains(self.locale)
-        {
-            self.locale
-        } else {
-            "en_US"
+        let locale = match self.locale {
+            Some(l)
+                if Self::get(client.clone(), base_url.join("/cdn/languages.json")?)
+                    .await?
+                    .iter()
+                    .any(|lang| lang == l) =>
+            {
+                l
+            }
+            _ => "en_US",
         };
         let middleware_client = match client {
             ClientType::Middleware(client) => client,
             ClientType::Plain(client) => match self.cache_dir {
-                Some(cache_dir) => MiddlewareClientBuilder::new(client).with(Cache(HttpCache {
-                    mode: CacheMode::ForceCache,
-                    manager: CACacheManager { path: cache_dir },
-                    options: HttpCacheOptions::default(),
-                })),
+                Some(cache_dir) => MiddlewareClientBuilder::new(client)
+                    .with(Cache(HttpCache {
+                        mode: CacheMode::ForceCache,
+                        manager: CACacheManager { path: cache_dir },
+                        options: HttpCacheOptions::default(),
+                    }))
+                    .build(),
                 None => MiddlewareClientBuilder::new(client).build(),
             },
         };
 
         Ok(Client {
             client: middleware_client,
-            version: version.to_owned(),
+            version,
             base_url,
             locale: locale.to_owned(),
         })
@@ -146,21 +155,38 @@ impl<'a> ClientBuilder<'a> {
 }
 
 macro_rules! create_endpoint {
-    ($name:ident, $kind:literal, $path:literal, $ret:ty) => {
-        pub async fn $name(&self) -> anyhow::Result<$ret> {
-            self.get::<$ret>(concat!("./", $path, ".json")).await
+    ($name:ident, $kind:literal, $path:literal, $t:ty) => {
+        pub async fn $name(&self) -> anyhow::Result<$t> {
+            self.get::<$t>(concat!("./", $path, ".json")).await
         }
     };
 }
 
 impl Client {
-    pub async fn new(cache_dir: P) -> anyhow::Result<Self> {
+    pub async fn new<P: Into<PathBuf>>(cache_dir: P) -> anyhow::Result<Self> {
         ClientBuilder::new().cache(cache_dir).build().await
     }
 
+    pub fn client(&self) -> ClientWithMiddleware {
+        self.client.clone()
+    }
+
+    pub const fn version(&self) -> &str {
+        self.version.as_str()
+    }
+
+    pub const fn base_url(&self) -> &Url {
+        &self.base_url
+    }
+
+    pub const fn locale(&self) -> &str {
+        self.locale.as_str()
+    }
+
     fn url(&self) -> anyhow::Result<Url> {
-        self.base_url
-            .join(&format!("/cdn/{}/data/{}/", self.version, self.locale))
+        Ok(self
+            .base_url
+            .join(&format!("/cdn/{}/data/{}/", self.version, self.locale))?)
     }
 
     async fn get<T: DeserializeOwned>(&self, path: &str) -> anyhow::Result<T> {
@@ -229,11 +255,11 @@ impl Client {
     }
 
     async fn get_image(&self, path: Url) -> anyhow::Result<DynamicImage> {
-        let response = self.agent.get(path.as_str()).send().await?;
+        let response = self.client.get(path.as_str()).send().await?;
         Ok(image::load_from_memory(&response.bytes().await?)?)
     }
 
-    pub async fn image_of<T: HasImage>(&self, item: &T) -> anyhow::Result<DynamicImage> {
+    pub async fn image_of<T: HasImage + Sync>(&self, item: &T) -> anyhow::Result<DynamicImage> {
         self.get_image(self.base_url.join(&format!(
             "/cdn/{}/img/{}",
             &self.version,
@@ -242,7 +268,7 @@ impl Client {
         .await
     }
 
-    pub async fn sprite_of<T: HasImage>(&self, item: &T) -> anyhow::Result<DynamicImage> {
+    pub async fn sprite_of<T: HasImage + Sync>(&self, item: &T) -> anyhow::Result<DynamicImage> {
         self.get_image(self.base_url.join(&format!(
             "/cdn/{}/img/{}",
             &self.version,

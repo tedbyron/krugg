@@ -44,3 +44,8 @@ features = ["charset", "cookies", "http2", "json", "macos-system-configuration",
 version = "0.1.0"
 path = "../tauri-plugin-lcu"
 features = ["tauri-plugin-store", "ugg-types"]
+
+[dependencies.tokio]
+version = "1.44.0"
+default-features = false
+features = ["rt", "rt-multi-thread"]

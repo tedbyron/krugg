@@ -7,7 +7,6 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
 };
 use tauri_plugin_http::reqwest::{Client, Url};
-use tokio::task;
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
 
 pub mod commands;
@@ -81,7 +80,7 @@ pub fn init<R: Runtime, S: ToString>(store_file: Option<S>) -> TauriPlugin<R> {
             state.cancel_token.cancel();
             state.tracker.close();
 
-            task::block_in_place(move || {
+            tokio::task::block_in_place(move || {
                 async_runtime::block_on(async {
                     state.tracker.wait().await;
                 });
