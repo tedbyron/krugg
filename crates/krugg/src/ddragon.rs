@@ -30,23 +30,28 @@ pub enum ClientType {
 }
 
 #[derive(Debug)]
-pub struct ClientBuilder {
-    base_url: &'static str,
+pub struct ClientBuilder<'a> {
+    base_url: &'a str,
     client: Option<Client>,
     cache_dir: Option<PathBuf>,
-    version: Option<String>,
-    locale: Option<String>,
+    version: Option<&'a str>,
+    locale: &'a str,
 }
 
-impl ClientBuilder {
+impl<'a> ClientBuilder<'a> {
     pub fn new() -> Self {
         Self {
             base_url: "https://ddragon.leagueoflegends.com",
             client: None,
             cache_dir: None,
             version: None,
-            locale: None,
+            locale: "en_US",
         }
+    }
+
+    pub fn base_url(mut self, base_url: &'a str) -> Self {
+        self.base_url = base_url;
+        self
     }
 
     pub fn client_with_middleware(mut self, client: ClientWithMiddleware) -> Self {
@@ -65,12 +70,12 @@ impl ClientBuilder {
     }
 
     pub fn version<V: AsRef<str>>(mut self, version: Option<V>) -> Self {
-        self.version = version.map(|v| v.as_ref().to_owned());
+        self.version = version.map(|v| v.as_ref());
         self
     }
 
-    pub fn locale<L: AsRef<str>>(mut self, locale: Option<L>) -> Self {
-        self.locale = locale.map(|l| l.as_ref().to_owned());
+    pub fn locale<L: AsRef<str>>(mut self, locale: L) -> Self {
+        self.locale = locale.as_ref();
         self
     }
 
@@ -107,12 +112,17 @@ impl ClientBuilder {
                 .get::<Box<[str]>>("/api/version.json")
                 .await?
                 .get(0)
-                .map_or_else(|| anyhow!("no latest version"), ToOwned::to_owned)?,
+                .ok_or_else(|| anyhow!("no latest version"))?,
         };
-        let available_locales = self.get::<Box<[str]>>("/cdn/languages.json").await?;
-        let locale = match self.locale {
-            Some(locale) if available_locales.contains(&locale) => locale,
-            _ => "en_US".to_owned(),
+        let locale = if self.locale == "en_US"
+            || self
+                .get::<Box<[str]>>("/cdn/languages.json")
+                .await?
+                .contains(self.locale)
+        {
+            self.locale
+        } else {
+            "en_US"
         };
         let middleware_client = match client {
             ClientType::Middleware(client) => client,
@@ -128,9 +138,9 @@ impl ClientBuilder {
 
         Ok(Client {
             client: middleware_client,
-            version,
+            version: version.to_owned(),
             base_url,
-            locale,
+            locale: locale.to_owned(),
         })
     }
 }
