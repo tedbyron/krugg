@@ -19,6 +19,7 @@ anyhow = "1.0.97"
 ddragon = { version = "0.9.1", default-features = false, features = ["image"] }
 http-cache-reqwest = "0.15.1"
 image = { version = "0.25.5", default-features = false, features = ["jpeg", "png", "rayon"] }
+levenshtein = "1.0.5"
 lru = "0.13.0"
 mimalloc = "0.1.43"
 reqwest-middleware = "0.4.1"

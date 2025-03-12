@@ -112,7 +112,7 @@ impl<'a> ClientBuilder<'a> {
             .client
             .map_or_else(|| ClientType::Plain(ReqwestClient::new()), |client| client);
         let base_url = Url::parse(self.base_url)?;
-        let versions = Self::get(client.clone(), base_url.join("/api/version.json")?).await?;
+        let versions = Self::get(client.clone(), base_url.join("/api/versions.json")?).await?;
         let version = match self.version {
             Some(v) => v.to_string(),
             None => versions
@@ -167,7 +167,7 @@ impl Client {
         ClientBuilder::new().cache(cache_dir).build().await
     }
 
-    pub fn client(&self) -> ClientWithMiddleware {
+    pub(crate) fn client(&self) -> ClientWithMiddleware {
         self.client.clone()
     }
 
