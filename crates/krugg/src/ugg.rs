@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use std::{collections::HashMap, num::NonZeroUsize};
+use std::{collections::HashMap, num::NonZeroUsize, sync::Arc};
 
 use anyhow::{anyhow, bail};
 use ddragon::models::{champions::ChampionShort, items::Item, runes::RuneElement};
@@ -18,17 +18,19 @@ use ugg_types::{
 
 use crate::ddragon::{Client as DdragonClient, ClientBuilder as DdragonClientBuilder};
 
-type Cache<T> = Mutex<
-    LruCache<
-        String,
-        HashMap<mappings::Region, HashMap<mappings::Rank, HashMap<mappings::Role, T>>>,
+type Cache<T> = Arc<
+    Mutex<
+        LruCache<
+            String,
+            HashMap<mappings::Region, HashMap<mappings::Rank, HashMap<mappings::Role, T>>>,
+        >,
     >,
 >;
 type OverviewCache = Cache<WrappedOverviewData>;
 type MatchupCache = Cache<WrappedMatchupData>;
 type UggApiVersions = HashMap<String, HashMap<String, String>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DdragonClientWrapper {
     ddragon: DdragonClient,
     overview_cache: OverviewCache,
@@ -77,8 +79,8 @@ impl DdragonClientWrapper {
 
         Ok(Self {
             ddragon: client.build().await?,
-            overview_cache: Mutex::new(LruCache::new(cache_size)),
-            matchup_cache: Mutex::new(LruCache::new(cache_size)),
+            overview_cache: Arc::new(Mutex::new(LruCache::new(cache_size))),
+            matchup_cache: Arc::new(Mutex::new(LruCache::new(cache_size))),
         })
     }
 
@@ -332,8 +334,8 @@ impl Client {
         })
     }
 
-    pub fn client(&self) -> ClientWithMiddleware {
-        self.client.client()
+    pub fn client(&self) -> DdragonClientWrapper {
+        self.client.clone()
     }
 
     pub const fn version(&self) -> &str {
