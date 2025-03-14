@@ -305,7 +305,7 @@ impl Client {
                 .any(|Versions { ddragon, .. }| ddragon == &version)
             {
                 client = DdragonClientWrapper::new(app, Some(&v.ddragon), locale).await?;
-                version = client.version().to_owned();
+                client.version().clone_into(&mut version);
             }
         } else {
             bail!("no supported versions");

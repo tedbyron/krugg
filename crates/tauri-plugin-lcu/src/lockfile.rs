@@ -1,7 +1,6 @@
 use std::{
     fs,
     net::Ipv4Addr,
-    panic,
     path::{Path, PathBuf},
     sync::LazyLock,
 };
@@ -242,7 +241,7 @@ impl LockFile {
     }
 
     /// Watch for file system changes to the LCU lockfile.
-    pub fn watch<R: Runtime>(app: &AppHandle<R>) -> crate::Result<()> {
+    pub fn watch<R: Runtime>(app: &AppHandle<R>) {
         // Get the lockfile path from the store or call Self::path every 5
         // seconds until it returns a path.
         let state = app.state::<LcuState>();
@@ -303,7 +302,5 @@ impl LockFile {
                 }
             }
         }));
-
-        Ok(())
     }
 }

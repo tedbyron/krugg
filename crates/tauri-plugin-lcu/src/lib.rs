@@ -70,7 +70,7 @@ pub fn init<R: Runtime, S: ToString>(store_file: Option<S>) -> TauriPlugin<R> {
                 tracker: TaskTracker::new(),
             });
 
-            LockFile::watch(app)?;
+            LockFile::watch(app);
 
             Ok(())
         })
