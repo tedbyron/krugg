@@ -116,8 +116,8 @@ impl<'a> ClientBuilder<'a> {
         let base_url = Url::parse(self.base_url)?;
         let versions = Self::get(client.clone(), base_url.join("/api/versions.json")?).await?;
         let version = match self.version {
-            Some(v) => v.to_string(),
-            None => versions
+            Some(v) if versions.iter().any(|version| version == v) => v.to_string(),
+            _ => versions
                 .first()
                 .cloned()
                 .ok_or_else(|| anyhow!("no latest version"))?,
