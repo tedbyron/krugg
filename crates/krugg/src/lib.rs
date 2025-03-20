@@ -52,7 +52,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_lcu::init(Some(STORE_FILE)))
+        .plugin(tauri_plugin_lcu::init(STORE_FILE))
         .setup(|app| {
             // Set up app state.
             app.manage(State {

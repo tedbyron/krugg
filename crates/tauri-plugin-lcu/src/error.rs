@@ -25,11 +25,8 @@ pub enum Error {
     InvalidHeaderValue(#[from] tauri_plugin_http::reqwest::header::InvalidHeaderValue),
     #[error(transparent)]
     Reqwest(#[from] tauri_plugin_http::reqwest::Error),
-    #[error("request failed with status {status_code}: {text}")]
-    UnsuccessfulResponse {
-        status_code: StatusCode,
-        text: String,
-    },
+    #[error("request failed with status {status}: {text}")]
+    StatusCode { status: StatusCode, text: String },
     #[error("not connected to the LCU")]
     Disconnected,
     #[error("{0}")]

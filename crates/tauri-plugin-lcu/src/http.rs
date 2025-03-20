@@ -22,8 +22,8 @@ impl ResultExt<Response> for tauri_plugin_http::reqwest::Result<Response> {
     async fn check_status(self) -> crate::Result<Response> {
         match self {
             Ok(res) if res.status().is_success() => Ok(res),
-            Ok(res) => Err(crate::Error::UnsuccessfulResponse {
-                status_code: res.status(),
+            Ok(res) => Err(crate::Error::StatusCode {
+                status: res.status(),
                 text: res.text().await?,
             }),
             Err(err) => Err(err.into()),

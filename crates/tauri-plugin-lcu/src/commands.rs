@@ -1,6 +1,4 @@
-use serde_json::Value;
 use tauri::{AppHandle, Runtime};
-use tauri_plugin_http::reqwest::Response;
 #[cfg(feature = "ugg-types")]
 use ugg_types::{
     client_runepage::{NewRunePage, RunePage},
@@ -8,54 +6,6 @@ use ugg_types::{
 };
 
 use crate::LcuExt;
-
-/// Send a GET request and return the raw response.
-#[tauri::command]
-pub async fn get<R: Runtime>(app: AppHandle<R>, path: &str) -> crate::Result<Response> {
-    app.lcu().get_raw(path).await
-}
-
-/// Send a HEAD request.
-#[tauri::command]
-pub async fn head<R: Runtime>(app: AppHandle<R>, path: &str) -> crate::Result<Response> {
-    app.lcu().head(path).await
-}
-
-/// Send a POST request.
-#[tauri::command]
-pub async fn post<R: Runtime>(
-    app: AppHandle<R>,
-    path: &str,
-    body: Value,
-) -> crate::Result<Response> {
-    app.lcu().post(path, &body).await
-}
-
-/// Send a PUT request.
-#[tauri::command]
-pub async fn put<R: Runtime>(
-    app: AppHandle<R>,
-    path: &str,
-    body: Value,
-) -> crate::Result<Response> {
-    app.lcu().put(path, &body).await
-}
-
-/// Send a DELETE request.
-#[tauri::command]
-pub async fn delete<R: Runtime>(app: AppHandle<R>, path: &str) -> crate::Result<Response> {
-    app.lcu().delete(path).await
-}
-
-/// Send a PATCH request.
-#[tauri::command]
-pub async fn patch<R: Runtime>(
-    app: AppHandle<R>,
-    path: &str,
-    body: Value,
-) -> crate::Result<Response> {
-    app.lcu().patch(path, &body).await
-}
 
 /// Get the current summoner.
 ///
@@ -84,7 +34,8 @@ pub async fn get_current_rune_page<R: Runtime>(app: AppHandle<R>) -> crate::Resu
 pub async fn update_rune_page<R: Runtime>(
     app: AppHandle<R>,
     page_id: i64,
-    rune_page: &NewRunePage,
-) -> crate::Result<Response> {
-    app.lcu().update_rune_page(page_id, rune_page).await
+    rune_page: NewRunePage,
+) -> crate::Result<()> {
+    app.lcu().update_rune_page(page_id, &rune_page).await?;
+    Ok(())
 }

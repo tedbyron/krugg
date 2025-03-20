@@ -9,7 +9,7 @@ use tauri::{
 use tauri_plugin_http::reqwest::{Client, Url};
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
 
-pub mod commands;
+mod commands;
 mod error;
 mod http;
 mod lockfile;
@@ -35,7 +35,8 @@ impl<R: Runtime, T: Manager<R>> LcuExt<R> for T {
 #[derive(Debug)]
 struct LcuState {
     /// Persistent store file.
-    store_file: Option<String>,
+    #[cfg(feature = "tauri-plugin-store")]
+    store_file: String,
     /// LCU lockfile.
     lockfile: RwLock<Option<LockFile>>,
     /// LCU API base URL, including protocol, hostname, and port.
@@ -49,19 +50,38 @@ struct LcuState {
 }
 
 /// Initialize the plugin.
+#[cfg(not(feature = "tauri-plugin-store"))]
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    _init(None)
+}
+
+/// Initialize the plugin.
 ///
-/// `store_file` is an optional path to a `tauri-plugin-store` store. This
-/// requires the `tauri-plugin-store` feature. If provided, the LCU lockfile
-/// path will be saved in the store under the key `"lockfile_path"`.
-pub fn init<R: Runtime, S: ToString>(store_file: Option<S>) -> TauriPlugin<R> {
-    let store_file = store_file.map(|s| s.to_string());
+/// `store_file` is a path to a `tauri-plugin-store` store. The LCU lockfile
+/// path will be saved in the store under the key `lockfile_path`.
+#[cfg(feature = "tauri-plugin-store")]
+pub fn init<R: Runtime, S: ToString>(store_file: S) -> TauriPlugin<R> {
+    _init(Some(store_file))
+}
+
+fn _init<R: Runtime, S: ToString>(store_file: Option<S>) -> TauriPlugin<R> {
+    #[cfg(feature = "tauri-plugin-store")]
+    let store_file = store_file.unwrap().to_string();
 
     Builder::new("lcu")
-        .invoke_handler(tauri::generate_handler![])
+        .invoke_handler(tauri::generate_handler![
+            #[cfg(feature = "ugg-types")]
+            commands::get_current_summoner,
+            #[cfg(feature = "ugg-types")]
+            commands::get_current_rune_page,
+            #[cfg(feature = "ugg-types")]
+            commands::update_rune_page,
+        ])
         .setup(|app, _| {
             let lcu = Lcu(app.clone());
             app.manage(lcu);
             app.manage(LcuState {
+                #[cfg(feature = "tauri-plugin-store")]
                 store_file,
                 lockfile: RwLock::new(None),
                 base_url: RwLock::new(None),

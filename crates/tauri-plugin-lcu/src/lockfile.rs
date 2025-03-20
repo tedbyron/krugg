@@ -50,11 +50,9 @@ impl LockFile {
         #[cfg(feature = "tauri-plugin-store")]
         {
             let state = app.state::<LcuState>();
-            if let Some(store_file) = &state.store_file {
-                if let Ok(store) = app.store(store_file) {
-                    if let Some(JsonValue::String(path)) = store.get("lockfile_path") {
-                        return Some(path.into());
-                    }
+            if let Ok(store) = app.store(&state.store_file) {
+                if let Some(JsonValue::String(path)) = store.get("lockfile_path") {
+                    return Some(path.into());
                 }
             }
         }
@@ -146,7 +144,7 @@ impl LockFile {
     }
 
     /// Parse the lockfile contents. Saves the lockfile path to the store if
-    /// the plugin state's `store_file` field is set.
+    /// the `tauri-plugin-store` feature is enabled.
     fn parse<R: Runtime>(app: &AppHandle<R>, path: impl AsRef<Path>) -> Option<(Self, Url)> {
         let path = path.as_ref();
         let lockfile = fs::read_to_string(path).ok()?;
@@ -165,10 +163,8 @@ impl LockFile {
         #[cfg(feature = "tauri-plugin-store")]
         {
             let state = app.state::<LcuState>();
-            if let Some(store_file) = &state.store_file {
-                if let Ok(store) = app.store(store_file) {
-                    store.set("lockfile_path", path.to_str().unwrap());
-                }
+            if let Ok(store) = app.store(&state.store_file) {
+                store.set("lockfile_path", path.to_str().unwrap());
             }
         }
 
