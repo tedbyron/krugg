@@ -13,7 +13,6 @@ use ugg_types::{
     mappings,
     matchups::{MatchupData, WrappedMatchupData},
     overview::{OverviewData, WrappedOverviewData},
-    rune::RuneExtended,
 };
 
 use crate::ddragon::{Client as DdragonClient, ClientBuilder as DdragonClientBuilder};
@@ -37,7 +36,7 @@ pub struct DdragonClientWrapper {
     matchup_cache: MatchupCache,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Versions {
     ddragon: String,
     ugg: String,
@@ -49,6 +48,17 @@ pub struct ClientBuilder<'a> {
     locale: Option<&'a str>,
 }
 
+#[derive(Debug, Clone)]
+pub struct RuneElementWrapper {
+    pub slot: u64,
+    pub index: u64,
+    pub siblings: u64,
+    pub parent: String,
+    pub parent_id: i64,
+    pub rune: RuneElement,
+}
+
+#[derive(Debug, Clone)]
 pub struct Client {
     client: DdragonClientWrapper,
     ugg_api_versions: UggApiVersions,
@@ -58,7 +68,7 @@ pub struct Client {
     patch_version: String,
     champions: HashMap<String, ChampionShort>,
     items: HashMap<String, Item>,
-    runes: HashMap<i64, RuneExtended<RuneElement>>,
+    runes: HashMap<i64, RuneElementWrapper>,
     summoner_spells: HashMap<i64, String>,
 }
 
@@ -116,7 +126,7 @@ impl DdragonClientWrapper {
         Ok(self.ddragon.items().await?.data)
     }
 
-    pub async fn get_runes(&self) -> anyhow::Result<HashMap<i64, RuneExtended<RuneElement>>> {
+    pub async fn get_runes(&self) -> anyhow::Result<HashMap<i64, RuneElementWrapper>> {
         let runes = self.ddragon.runes().await?;
         let mut data = HashMap::new();
 
@@ -126,7 +136,7 @@ impl DdragonClientWrapper {
                 for (i, rune) in slot.runes.into_iter().enumerate() {
                     data.insert(
                         rune.id,
-                        RuneExtended {
+                        RuneElementWrapper {
                             rune,
                             slot: slot_idx as u64,
                             index: i as u64,

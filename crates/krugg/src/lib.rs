@@ -9,6 +9,7 @@ use tauri::{
 };
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_store::StoreExt;
+use tokio::task;
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
 
 mod commands;
@@ -27,6 +28,7 @@ const EVENTS: &[&str] = &[
 
 #[derive(Debug)]
 pub struct State {
+    client: ugg::Client,
     /// Used to cancel all tasks before the app exits.
     cancel_token: CancellationToken,
     /// Used to wait for all tasks to complete before the app exits.
@@ -61,11 +63,20 @@ pub fn run() {
 }
 
 fn setup<R: Runtime>(app: &mut App<R>) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    // Set up app state.
-    app.manage(State {
-        cancel_token: CancellationToken::new(),
-        tracker: TaskTracker::new(),
-    });
+    let handle = app.handle();
+    task::block_in_place(move || {
+        async_runtime::block_on(async {
+            // Set up app state.
+            handle.manage(State {
+                // TODO: sys locale
+                client: ugg::ClientBuilder::new().build(handle).await?,
+                cancel_token: CancellationToken::new(),
+                tracker: TaskTracker::new(),
+            });
+
+            Ok::<(), anyhow::Error>(())
+        })
+    })?;
 
     // Set up persistent store.
     app.store_builder(STORE_FILE)

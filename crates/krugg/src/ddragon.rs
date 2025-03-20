@@ -118,7 +118,7 @@ impl<'a> ClientBuilder<'a> {
         let version = match self.version {
             Some(v) if versions.iter().any(|version| version == v) => v.to_string(),
             _ => versions
-                .first()
+                .first() // List is sorted by version number descending
                 .cloned()
                 .ok_or_else(|| anyhow!("no latest version"))?,
         };

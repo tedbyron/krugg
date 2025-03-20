@@ -149,7 +149,7 @@ impl LockFile {
         let port = parts[2].parse::<u16>().ok()?;
         let token = parts[3].to_owned();
 
-        let mut base_url = Url::parse(&format!("https://{}", Ipv4Addr::LOCALHOST)).ok()?;
+        let mut base_url = Url::parse(&format!("https://{}", Ipv4Addr::LOCALHOST)).unwrap();
         base_url.set_port(Some(port)).ok()?;
         let auth_header = format!(
             "Basic {}",
