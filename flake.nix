@@ -1,5 +1,5 @@
 {
-  description = "krugg";
+  description = "Alternative client for u.gg";
 
   inputs.rust-overlay = {
     url = "github:oxalica/rust-overlay";

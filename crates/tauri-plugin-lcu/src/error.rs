@@ -22,9 +22,11 @@ pub enum Error {
     #[error(transparent)]
     Store(#[from] tauri_plugin_store::Error),
     #[error(transparent)]
-    InvalidHeaderValue(#[from] tauri_plugin_http::reqwest::header::InvalidHeaderValue),
+    UrlParse(#[from] url::ParseError),
     #[error(transparent)]
     Reqwest(#[from] tauri_plugin_http::reqwest::Error),
+    #[error(transparent)]
+    InvalidHeaderValue(#[from] tauri_plugin_http::reqwest::header::InvalidHeaderValue),
     #[error("request failed with status {status}: {text}")]
     StatusCode { status: StatusCode, text: String },
     #[error("not connected to the LCU")]

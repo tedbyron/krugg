@@ -121,15 +121,16 @@ impl DdragonClientWrapper {
         let mut data = HashMap::new();
 
         for class in runes {
-            for (slot_idx, slot) in class.slots.iter().enumerate() {
-                for (i, rune) in slot.runes.iter().enumerate() {
+            for (slot_idx, slot) in class.slots.into_iter().enumerate() {
+                let siblings = slot.runes.len() as u64;
+                for (i, rune) in slot.runes.into_iter().enumerate() {
                     data.insert(
                         rune.id,
                         RuneExtended {
-                            rune: rune.clone(),
+                            rune,
                             slot: slot_idx as u64,
                             index: i as u64,
-                            siblings: slot.runes.len() as u64,
+                            siblings,
                             parent: class.name.clone(),
                             parent_id: class.id,
                         },

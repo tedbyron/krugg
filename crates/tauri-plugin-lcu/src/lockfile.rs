@@ -2,7 +2,6 @@ use std::{
     fs,
     net::Ipv4Addr,
     path::{Path, PathBuf},
-    sync::LazyLock,
 };
 
 use base64ct::{Base64, Encoding};
@@ -22,9 +21,6 @@ use crate::LcuState;
 
 /// LCU API username.
 const USERNAME: &str = "riot";
-/// LCU API base URL without port.
-static BASE_URL: LazyLock<Url> =
-    LazyLock::new(|| Url::parse(&format!("https://{}", Ipv4Addr::LOCALHOST)).unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -153,7 +149,7 @@ impl LockFile {
         let port = parts[2].parse::<u16>().ok()?;
         let token = parts[3].to_owned();
 
-        let mut base_url = BASE_URL.clone();
+        let mut base_url = Url::parse(&format!("https://{}", Ipv4Addr::LOCALHOST)).ok()?;
         base_url.set_port(Some(port)).ok()?;
         let auth_header = format!(
             "Basic {}",
@@ -217,22 +213,25 @@ impl LockFile {
     /// Update `LcuState` `lockfile`, `base_url`, and `client` fields.
     async fn update_state<R: Runtime>(app: &AppHandle<R>, lockfile: Self, url: Url) {
         let state = app.state::<LcuState>();
-        {
-            let mut lock = state.lockfile.write().await;
-            *lock = Some(lockfile.clone());
-        }
-        _ = app.emit("lcu-lockfile", &lockfile);
-        _ = app.emit("lcu-base-url", url.as_str());
-        {
-            let mut lock = state.base_url.write().await;
-            *lock = Some(url);
-        }
+
         if let Ok(client) = crate::http::client(&lockfile) {
             {
                 let mut lock = state.client.write().await;
                 *lock = Some(client);
             }
             _ = app.emit("lcu-connected", ());
+        }
+
+        {
+            _ = app.emit("lcu-base-url", &url.as_str());
+            let mut lock = state.base_url.write().await;
+            *lock = Some(url);
+        }
+
+        {
+            _ = app.emit("lcu-lockfile", &lockfile);
+            let mut lock = state.lockfile.write().await;
+            *lock = Some(lockfile);
         }
     }
 

@@ -59,17 +59,11 @@ impl<R: Runtime> Lcu<R> {
     /// Add a path to the LCU API base URL.
     async fn url(&self, path: &str) -> crate::Result<Url> {
         let state = self.0.state::<LcuState>();
-        let mut url = {
-            let lock = state.base_url.read().await;
-            match &*lock {
-                Some(url) => url.clone(),
-                None => {
-                    return Err(crate::Error::Disconnected);
-                }
-            }
-        };
-        url.set_path(path);
-        Ok(url)
+        let lock = state.base_url.read().await;
+        match &*lock {
+            Some(url) => Ok(url.join(path)?),
+            None => Err(crate::Error::Disconnected),
+        }
     }
 
     /// Send a request to the LCU API.
@@ -156,21 +150,29 @@ impl<R: Runtime> Lcu<R> {
             .await
     }
 
-    /// Get the current rune page.
+    /// Get the current rune page, unless `prefix` is provided. If `prefix` is
+    /// provided, returns the first page with a name starting with `prefix`.
     ///
     /// - GET [/lol-perks/v1/pages](https://www.mingweisamuel.com/lcu-schema/tool/#/Plugin%20lol-perks/GetLolPerksV1Currentpage)
     #[cfg(feature = "ugg-types")]
-    pub async fn get_current_rune_page(&self) -> crate::Result<RunePage> {
+    pub async fn get_current_rune_page(
+        &self,
+        prefix: Option<impl AsRef<str>>,
+    ) -> crate::Result<RunePage> {
         let pages = self.get::<RunePages>("/lol-perks/v1/pages").await?;
 
-        for page in &pages {
-            if page.name.starts_with("krugg:") && page.is_deletable {
-                return Ok(page.clone());
+        if let Some(p) = prefix {
+            let p = p.as_ref();
+            for page in pages.into_iter() {
+                if page.name.starts_with(p) && page.is_deletable {
+                    return Ok(page);
+                }
             }
-        }
-        for page in &pages {
-            if page.current && page.is_deletable {
-                return Ok(page.clone());
+        } else {
+            for page in pages.into_iter() {
+                if page.current && page.is_deletable {
+                    return Ok(page);
+                }
             }
         }
 

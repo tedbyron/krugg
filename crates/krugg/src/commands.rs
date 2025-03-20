@@ -1,6 +1,6 @@
 use tauri::{Error, Manager, Window};
 
-#[tauri::command(async)]
+#[tauri::command]
 pub fn show_main_window(window: Window) -> tauri::Result<()> {
     if matches!(window.is_visible(), Ok(false)) {
         window

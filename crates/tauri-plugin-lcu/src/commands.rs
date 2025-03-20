@@ -16,13 +16,17 @@ pub async fn get_current_summoner<R: Runtime>(app: AppHandle<R>) -> crate::Resul
     app.lcu().get_current_summoner().await
 }
 
-/// Get the current rune page.
+/// Get the current rune page, unless `prefix` is provided. In the latter case,
+/// the first page with a name starting with `prefix` will be returned.
 ///
 /// - GET [/lol-perks/v1/pages](https://www.mingweisamuel.com/lcu-schema/tool/#/Plugin%20lol-perks/GetLolPerksV1Currentpage)
 #[cfg(feature = "ugg-types")]
 #[tauri::command]
-pub async fn get_current_rune_page<R: Runtime>(app: AppHandle<R>) -> crate::Result<RunePage> {
-    app.lcu().get_current_rune_page().await
+pub async fn get_current_rune_page<R: Runtime>(
+    app: AppHandle<R>,
+    prefix: Option<&str>,
+) -> crate::Result<RunePage> {
+    app.lcu().get_current_rune_page(prefix).await
 }
 
 /// Deletes the rune page with `page_id`, and adds `rune_page`.

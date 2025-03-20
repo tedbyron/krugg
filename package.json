@@ -9,10 +9,13 @@
   "engines": {
     "node": ">=22"
   },
+  "workspaces": [
+    "crates/tauri-plugin-lcu"
+  ],
   "scripts": {
     "prepare": "svelte-kit sync",
-    "dev": "vite dev",
-    "build": "vite build",
+    "dev": "npm run -ws --if-present dev & vite dev",
+    "build": "npm run -ws --if-present build && vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -21,15 +24,16 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.3.0",
-    "@tauri-apps/plugin-opener": "^2.2.6"
+    "@tauri-apps/api": "^2.4.0",
+    "@tauri-apps/plugin-opener": "^2.2.6",
+    "tauri-plugin-lcu-api": "*"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.7",
     "@sveltejs/adapter-static": "^3.0.8",
     "@sveltejs/kit": "^2.20.1",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
-    "@tauri-apps/cli": "^2.3.1",
+    "@tauri-apps/cli": "^2.4.0",
     "@types/node": "^22.13.10",
     "autoprefixer": "^10.4.21",
     "cssnano": "^7.0.6",
