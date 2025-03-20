@@ -1,5 +1,5 @@
 {
-  description = "223173-amazon-ast2";
+  description = "krugg";
 
   inputs.rust-overlay = {
     url = "github:oxalica/rust-overlay";
