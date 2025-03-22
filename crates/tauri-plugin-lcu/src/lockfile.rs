@@ -219,7 +219,7 @@ impl LockFile {
                 let mut lock = state.client.write().await;
                 *lock = Some(client);
             }
-            _ = app.emit("lcu-connected", ());
+            _ = app.emit("lcu-connected", true);
         }
 
         {
@@ -269,8 +269,8 @@ impl LockFile {
         let app = app.clone();
         async_runtime::spawn(state.tracker.track_future(async move {
             let (mut watcher, mut rx) = Self::watcher(&app, &path).unwrap();
-            // TODO: panics if the lockfile path is set but file doesn't exist
-            //       yet (client not open).
+            // TODO: panics if the path is set but file doesn't exist yet
+            //       (client not open).
             watcher.watch(&path, RecursiveMode::NonRecursive).unwrap();
 
             let state = app.state::<LcuState>();
@@ -291,7 +291,7 @@ impl LockFile {
                                 Self::update_state(&app, lockfile, url).await;
                             }
                         } else {
-                            _ = app.emit("lcu-disconnected", ());
+                            _ = app.emit("lcu-connected", false);
                         }
                     }
                 }

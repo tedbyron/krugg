@@ -9,8 +9,6 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error(transparent)]
     Utf8(#[from] std::str::Utf8Error),
-    // #[error(transparent)]
-    // ParseInt(#[from] std::num::ParseIntError),
     #[error(transparent)]
     Shell(#[from] tauri_plugin_shell::Error),
     #[error("command output status code {0:?}")]
@@ -40,6 +38,6 @@ impl Serialize for Error {
     where
         S: Serializer,
     {
-        serializer.serialize_str(self.to_string().as_ref())
+        serializer.serialize_str(&self.to_string())
     }
 }

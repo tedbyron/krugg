@@ -33,11 +33,10 @@ impl ResultExt<Response> for tauri_plugin_http::reqwest::Result<Response> {
 
 /// Build a new HTTP client with auth from a lockfile.
 pub fn client(lockfile: &LockFile) -> crate::Result<Client> {
-    let mut headers = HeaderMap::new();
-    headers.insert(
+    let headers = HeaderMap::from_iter([(
         header::AUTHORIZATION,
         HeaderValue::from_str(&lockfile.auth_header)?,
-    );
+    )]);
 
     Ok(ClientBuilder::new()
         .https_only(true)

@@ -12,22 +12,21 @@ use tauri_plugin_store::StoreExt;
 use tokio::task;
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
 
+mod channel;
 mod commands;
 mod ddragon;
+mod error;
 mod ugg;
+
+use error::{Error, Result};
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 const STORE_FILE: &str = "app_data.json";
-const EVENTS: &[&str] = &[
-    "lcu-lockfile",
-    "lcu-base-url",
-    "lcu-connected",
-    "lcu-disconnected",
-];
+const EVENTS: &[&str] = &["lcu-connected", "lcu-lockfile", "lcu-base-url"];
 
 #[derive(Debug)]
-pub struct State {
+struct State {
     client: ugg::Client,
     /// Used to cancel all tasks before the app exits.
     cancel_token: CancellationToken,
@@ -38,7 +37,10 @@ pub struct State {
 pub fn run() {
     #[allow(clippy::large_stack_frames)] // generate_context macro is scuffed
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![commands::show_main_window])
+        .invoke_handler(tauri::generate_handler![
+            commands::show_main_window,
+            commands::get_champions
+        ])
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             None,
@@ -74,7 +76,7 @@ fn setup<R: Runtime>(app: &mut App<R>) -> std::result::Result<(), Box<dyn std::e
                 tracker: TaskTracker::new(),
             });
 
-            Ok::<(), anyhow::Error>(())
+            Ok::<(), crate::Error>(())
         })
     })?;
 
@@ -98,11 +100,11 @@ fn setup<R: Runtime>(app: &mut App<R>) -> std::result::Result<(), Box<dyn std::e
         // TODO: emit messages from plugin after main window ready?
         for &evt in EVENTS {
             let w = win.clone();
-            win.listen(evt, move |evt| {
+            win.listen(evt, move |e| {
                 _ = w.eval(&format!(
                     "console.log('Event: name: {:?}, payload: {}')",
                     evt,
-                    evt.payload(),
+                    e.payload(),
                 ));
             });
         }

@@ -54,22 +54,19 @@ export interface RunePage {
 
 export interface NewRunePage {
   name: string
-  primary_style_id: number
-  selected_perk_ids: number[]
-  sub_style_id: number
+  primaryStyleId: number
+  selectedPerkIds: number[]
+  subStyleId: number
 }
 
-export async function getCurrentSummoner() {
+export const getCurrentSummoner = async () => {
   return await invoke<ClientSummoner>('plugin:lcu|get_current_summoner')
 }
 
-export async function getCurrentRunePage() {
+export const getCurrentRunePage = async () => {
   return await invoke<RunePage>('plugin:lcu|get_current_rune_page')
 }
 
-export async function updateRunePage(pageId: number, runePage: NewRunePage) {
-  return await invoke<null>('plugin:lcu|update_rune_page', {
-    page_id: pageId,
-    rune_page: runePage,
-  })
+export const updateRunePage = async (pageId: number, runePage: NewRunePage) => {
+  return await invoke<null>('plugin:lcu|update_rune_page', { pageId, runePage })
 }

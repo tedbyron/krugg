@@ -6,3 +6,5 @@
     invoke('show_main_window').catch(console.error)
   })
 </script>
+
+<a href="/champions">Champions</a>

@@ -2,7 +2,6 @@
 
 use std::{collections::HashMap, path::PathBuf};
 
-use anyhow::anyhow;
 use ddragon::models::{
     Challenges, Champion, Champions, ChampionsFull, Items, Maps, MissionAssets, ProfileIcons,
     Runes, SpellBuffs, SummonerSpells, Translations,
@@ -11,9 +10,13 @@ use ddragon::models::{
 };
 use http_cache_reqwest::{CACacheManager, Cache, CacheMode, HttpCache, HttpCacheOptions};
 use image::DynamicImage;
-use reqwest_middleware::{ClientBuilder as MiddlewareClientBuilder, ClientWithMiddleware};
+use reqwest_middleware::{
+    ClientBuilder as MiddlewareClientBuilder, ClientWithMiddleware, RequestBuilder,
+};
 use serde::{Deserialize, de::DeserializeOwned};
 use tauri_plugin_http::reqwest::{Client as ReqwestClient, Url};
+
+use crate::error::DdragonError;
 
 #[derive(Debug, Clone)]
 pub struct Client {
@@ -86,7 +89,7 @@ impl<'a> ClientBuilder<'a> {
         self
     }
 
-    async fn get(client: ClientType, url: Url) -> anyhow::Result<Box<[String]>> {
+    async fn get(client: ClientType, url: Url) -> crate::Result<Box<[String]>> {
         Ok(match client {
             ClientType::Middleware(client) => {
                 client
@@ -109,10 +112,13 @@ impl<'a> ClientBuilder<'a> {
 
     /// Builds the [`Client`]. Adds caching middleware if a
     /// [`ClientType::Plain`] client was provided with `cache_path`.
-    pub async fn build(self) -> anyhow::Result<Client> {
-        let client = self
-            .client
-            .map_or_else(|| ClientType::Plain(ReqwestClient::new()), |client| client);
+    pub async fn build(self) -> crate::Result<Client> {
+        let client = if let Some(client) = self.client {
+            client
+        } else {
+            // TODO: zstd https://github.com/tauri-apps/plugins-workspace/pull/2561
+            ClientType::Plain(ReqwestClient::builder().brotli(true).build()?)
+        };
         let base_url = Url::parse(self.base_url)?;
         let versions = Self::get(client.clone(), base_url.join("/api/versions.json")?).await?;
         let version = match self.version {
@@ -120,7 +126,7 @@ impl<'a> ClientBuilder<'a> {
             _ => versions
                 .first() // List is sorted by version number descending
                 .cloned()
-                .ok_or_else(|| anyhow!("no latest version"))?,
+                .ok_or(DdragonError::NoLatestVersion)?,
         };
         let locale = match self.locale {
             Some(l)
@@ -156,16 +162,18 @@ impl<'a> ClientBuilder<'a> {
     }
 }
 
-macro_rules! impl_endpoint {
-    ($name:ident, $kind:literal, $path:literal, $t:ty) => {
-        pub async fn $name(&self) -> anyhow::Result<$t> {
-            self.get::<$t>(concat!("./", $path, ".json")).await
-        }
+macro_rules! impl_endpoints {
+    ( $($name:ident : $path:literal, $t:ty ),* $(,)? ) => {
+        $(
+            pub async fn $name(&self) -> crate::Result<$t> {
+                self.get::<$t>(concat!("./", $path, ".json")).await
+            }
+        )*
     };
 }
 
 impl Client {
-    pub async fn new<P: Into<PathBuf>>(cache_path: P) -> anyhow::Result<Self> {
+    pub async fn new<P: Into<PathBuf>>(cache_path: P) -> crate::Result<Self> {
         ClientBuilder::new().cache(cache_path).build().await
     }
 
@@ -185,13 +193,13 @@ impl Client {
         self.locale.as_str()
     }
 
-    fn url(&self) -> anyhow::Result<Url> {
+    fn url(&self) -> crate::Result<Url> {
         Ok(self
             .base_url
             .join(&format!("/cdn/{}/data/{}/", self.version, self.locale))?)
     }
 
-    async fn get<T: DeserializeOwned>(&self, path: &str) -> anyhow::Result<T> {
+    async fn get<T: DeserializeOwned>(&self, path: &str) -> crate::Result<T> {
         Ok(self
             .client
             .get(self.url()?.join(path)?)
@@ -201,67 +209,45 @@ impl Client {
             .await?)
     }
 
-    impl_endpoint!(challenges, "challenge", "challenges", Challenges);
-    impl_endpoint!(champions, "champion", "champion", Champions);
-    impl_endpoint!(
-        champions_full,
-        "complete champion",
-        "championFull",
-        ChampionsFull
-    );
-    impl_endpoint!(items, "item", "item", Items);
-    impl_endpoint!(maps, "map", "map", Maps);
-    impl_endpoint!(
-        mission_assets,
-        "mission asset",
-        "mission-assets",
-        MissionAssets
-    );
-    impl_endpoint!(profile_icons, "profile icon", "profileicon", ProfileIcons);
-    impl_endpoint!(runes, "rune", "runesReforged", Runes);
-    impl_endpoint!(spell_buffs, "spell buff", "spellbuffs", SpellBuffs);
-    impl_endpoint!(
-        summoner_spells,
-        "summoner_spells",
-        "summoner",
-        SummonerSpells
-    );
-    impl_endpoint!(translations, "translation", "language", Translations);
-    impl_endpoint!(tft_arenas, "TFT arena", "tft-arena", Arenas);
-    impl_endpoint!(tft_augments, "TFT augment", "tft-augments", Augments);
-    impl_endpoint!(
-        tft_champions,
-        "TFT champion",
-        "tft-champion",
-        tft::Champions
-    );
-    impl_endpoint!(
-        tft_hero_augments,
-        "TFT hero augment",
-        "tft-hero-augments",
-        HeroAugments
-    );
-    impl_endpoint!(tft_items, "TFT item", "tft-item", tft::Items);
-    impl_endpoint!(tft_queues, "TFT queue", "tft-queues", Queues);
-    impl_endpoint!(tft_regalia, "TFT regalia", "tft-regalia", Regalia);
-    impl_endpoint!(tft_tacticians, "TFT tactician", "tft-tactician", Tacticians);
-    impl_endpoint!(tft_traits, "TFT trait", "tft-trait", Traits);
+    impl_endpoints! {
+        get_challenges: "challenges", Challenges,
+        get_champions: "champion", Champions,
+        get_champions_full: "championFull", ChampionsFull,
+        get_items: "item", Items,
+        get_maps: "map", Maps,
+        get_mission_assets: "mission-assets", MissionAssets,
+        get_profile_icons: "profileicon", ProfileIcons,
+        get_runes: "runesReforged", Runes,
+        get_spell_buffs: "spellbuffs", SpellBuffs,
+        get_summoner_spells: "summoner", SummonerSpells,
+        get_translations: "language", Translations,
+        get_tft_arenas: "tft-arena", Arenas,
+        get_tft_augments: "tft-augments", Augments,
+        get_tft_champions: "tft-champion", tft::Champions,
+        get_tft_hero_augments: "tft-hero-augments", HeroAugments,
+        get_tft_items: "tft-item", tft::Items,
+        get_tft_queues: "tft-queues", Queues,
+        get_tft_regalia: "tft-regalia", Regalia,
+        get_tft_tacticians: "tft-tactician", Tacticians,
+        get_tft_traits: "tft-trait", Traits,
+    }
 
-    pub async fn champion(&self, key: &str) -> anyhow::Result<Champion> {
-        self.get::<ChampionWrapper>(&format!("./champion/{key}.json"))
+    pub async fn get_champion(&self, key: &str) -> crate::Result<Champion> {
+        Ok(self
+            .get::<ChampionWrapper>(&format!("./champion/{key}.json"))
             .await?
             .data
             .get(key)
             .cloned()
-            .ok_or_else(|| anyhow!("no champion data for key {}", key))
+            .ok_or_else(|| DdragonError::NoChampionData(key.to_owned()))?)
     }
 
-    async fn get_image(&self, path: Url) -> anyhow::Result<DynamicImage> {
+    async fn get_image(&self, path: Url) -> crate::Result<DynamicImage> {
         let response = self.client.get(path.as_str()).send().await?;
         Ok(image::load_from_memory(&response.bytes().await?)?)
     }
 
-    pub async fn image_of<T: HasImage + Sync>(&self, item: &T) -> anyhow::Result<DynamicImage> {
+    pub async fn get_image_of<T: HasImage + Sync>(&self, item: &T) -> crate::Result<DynamicImage> {
         self.get_image(self.base_url.join(&format!(
             "/cdn/{}/img/{}",
             &self.version,
@@ -270,7 +256,7 @@ impl Client {
         .await
     }
 
-    pub async fn sprite_of<T: HasImage + Sync>(&self, item: &T) -> anyhow::Result<DynamicImage> {
+    pub async fn get_sprite_of<T: HasImage + Sync>(&self, item: &T) -> crate::Result<DynamicImage> {
         self.get_image(self.base_url.join(&format!(
             "/cdn/{}/img/{}",
             &self.version,
