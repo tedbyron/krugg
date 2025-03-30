@@ -1,4 +1,5 @@
 #![deny(clippy::all, clippy::nursery, rust_2018_idioms)]
+#![forbid(unsafe_code)]
 #![doc = include_str!("../../../README.md")]
 
 use std::time::Duration;

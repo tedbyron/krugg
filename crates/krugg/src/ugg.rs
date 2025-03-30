@@ -23,7 +23,7 @@ use tauri_plugin_http::reqwest::IntoUrl;
 use ugg_types::{
     mappings,
     matchups::{MatchupData, WrappedMatchupData},
-    overview::{OverviewData, WrappedOverviewData},
+    overview::{Overview, WrappedOverviewData},
 };
 
 use crate::{
@@ -250,6 +250,8 @@ impl Client {
             .into_iter()
             .filter_map(|v| {
                 let ugg = v.split('.').take(2).collect::<Box<[_]>>().join("_");
+                // BUG: https://github.com/rust-lang/rust-clippy/issues/14449
+                #[allow(clippy::map_entry)]
                 if ugg_api_versions.contains_key(&ugg) {
                     Some(Versions { ddragon: v, ugg })
                 } else {
@@ -400,7 +402,7 @@ impl Client {
         region: mappings::Region,
         mode: mappings::Mode,
         build: mappings::Build,
-    ) -> crate::Result<(OverviewData, mappings::Role)> {
+    ) -> crate::Result<(Overview, mappings::Role)> {
         let version =
             Self::ugg_api_version(&self.ugg_api_versions, &self.patch_version, "overview");
         let path = [
@@ -418,7 +420,7 @@ impl Client {
             &path,
             region,
             role,
-            |(_, data)| data.data.matches,
+            |(_, data)| data.data.matches(),
             |(role, data)| (data.data.clone(), *role),
         )
         .await
