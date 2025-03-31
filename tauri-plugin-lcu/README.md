@@ -8,13 +8,13 @@ League of Legends client (LCU) API client for tauri.
 ## Usage
 
 - Available commands: see [`build.rs`](./build.rs)
-- Emitted messages:
-  - `lcu-connected` with a boolean payload, true if the game client is running and an http client
-    was successfully created to connect to it
-  - `lcu-lockfile` with a [`crate::lockfile::LockFile`](https://docs.rs/tauri-plugin-lcu/latest/tauri-plugin-lcu/lockfile/struct.LockFile.html)
-    payload if the game client is running
-  - `lcu-base-url` with a [`url::Url`](https://docs.rs/url/latest/url/struct.Url.html) payload,
-    including protocol, hostname, and port, if the game client is running
+- Events:
+
+  | name            | payload                                               |
+  | --------------- | ----------------------------------------------------- |
+  | `lcu-connected` | `boolean`                                             |
+  | `lcu-lockfile`  | [`LockFile`](tauri-plugin-lcu/lib/index.ts) \| `null` |
+  | `lcu-base-url`  | `string` \| `null`                                    |
 
 ### Setup
 
@@ -23,25 +23,8 @@ League of Legends client (LCU) API client for tauri.
 {
   // ...
   "permissions": [
-    "http:default",
-    {
-      "identifier": "shell:allow-execute",
-      "allow": [
-        // Windows
-        {
-          "name": "wmic",
-          "cmd": "WMIC.exe",
-          "args": ["process", "WHERE", "Name='LeagueClientUx.exe'", "GET", "CommandLine"],
-        },
-        // macOS
-        {
-          "name": "ps",
-          "cmd": "ps",
-          "args": ["-xo", "args="],
-        },
-      ],
-    },
-  ],
+    "lcu:default"
+  ]
 }
 ```
 

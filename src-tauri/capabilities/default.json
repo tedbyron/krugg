@@ -8,26 +8,9 @@
     "core:default",
     "autostart:default",
     "global-shortcut:default",
-    "http:default",
     "lcu:default",
     "opener:default",
-    "positioner:default",
     "prevent-default:default",
-    {
-      "identifier": "shell:allow-execute",
-      "allow": [
-        {
-          "name": "wmic",
-          "cmd": "WMIC.exe",
-          "args": ["process", "WHERE", "Name='LeagueClientUx.exe'", "GET", "CommandLine"]
-        },
-        {
-          "name": "ps",
-          "cmd": "ps",
-          "args": ["-xo", "args="]
-        }
-      ]
-    },
     "store:default"
   ]
 }
