@@ -59,6 +59,10 @@ export interface NewRunePage {
   subStyleId: number
 }
 
+export const connected = async () => {
+  return await invoke<boolean>('plugin:lcu|connected')
+}
+
 export const getCurrentSummoner = async () => {
   return await invoke<ClientSummoner>('plugin:lcu|get_current_summoner')
 }

@@ -2,9 +2,9 @@
   import { invoke } from '@tauri-apps/api/core'
   import { onMount } from 'svelte'
 
-  onMount(() => {
-    invoke('show_main_window').catch(console.error)
+  onMount(async () => {
+    await invoke('show_main_window')
   })
 </script>
 
-<a href="/champions">Champions</a>
+<a href="/champs">Champions</a>

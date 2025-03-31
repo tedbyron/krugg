@@ -2,12 +2,7 @@
 
 Allows making requests to the LCU API
 
-- `allow-get`
-- `allow-head`
-- `allow-post`
-- `allow-put`
-- `allow-delete`
-- `allow-patch`
+- `allow-connected`
 - `allow-get-current-summoner`
 - `allow-get-current-rune-page`
 - `allow-update-rune-page`
@@ -20,6 +15,32 @@ Allows making requests to the LCU API
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`lcu:allow-connected`
+
+</td>
+<td>
+
+Enables the connected command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`lcu:deny-connected`
+
+</td>
+<td>
+
+Denies the connected command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>

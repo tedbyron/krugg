@@ -7,16 +7,17 @@ use tauri::{
     async_runtime::{self, RwLock},
     plugin::{Builder, TauriPlugin},
 };
-use tauri_plugin_http::reqwest::{Client, Url};
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
 
 mod commands;
 mod error;
 mod http;
 mod lockfile;
+mod state;
 
 pub use error::{Error, Result};
 use lockfile::LockFile;
+use state::LcuState;
 
 /// Access to the LCU APIs.
 pub struct Lcu<R: Runtime>(AppHandle<R>);
@@ -31,23 +32,6 @@ impl<R: Runtime, T: Manager<R>> LcuExt<R> for T {
     fn lcu(&self) -> &Lcu<R> {
         self.state::<Lcu<R>>().inner()
     }
-}
-
-#[derive(Debug)]
-struct LcuState {
-    /// Persistent store file.
-    #[cfg(feature = "tauri-plugin-store")]
-    store_file: String,
-    /// LCU lockfile.
-    lockfile: RwLock<Option<LockFile>>,
-    /// LCU API base URL, including protocol, hostname, and port.
-    base_url: RwLock<Option<Url>>,
-    /// HTTP client.
-    client: RwLock<Option<Client>>,
-    /// Used to cancel all tasks when the plugin is dropped.
-    cancel_token: CancellationToken,
-    /// Used to wait for all tasks to complete before dropping the plugin.
-    tracker: TaskTracker,
 }
 
 /// Initialize the plugin.
@@ -71,6 +55,7 @@ fn _init<R: Runtime, S: ToString>(store_file: Option<S>) -> TauriPlugin<R> {
 
     Builder::new("lcu")
         .invoke_handler(tauri::generate_handler![
+            commands::connected,
             #[cfg(feature = "ugg-types")]
             commands::get_current_summoner,
             #[cfg(feature = "ugg-types")]

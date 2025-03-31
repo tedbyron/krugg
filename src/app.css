@@ -6,10 +6,16 @@
   :root,
   body,
   main {
-    @apply h-screen;
+    @apply min-h-dvh;
   }
 
   :root {
-    @apply bg-zinc-900 text-zinc-50;
+    @apply bg-gruvbox-bg text-gruvbox-fg dark:bg-gruvbox-dark-bg dark:text-gruvbox-dark-fg;
+  }
+
+  *,
+  ::before,
+  ::after {
+    @apply border-gruvbox-fg dark:border-gruvbox-dark-fg;
   }
 }

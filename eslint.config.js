@@ -11,19 +11,6 @@ const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url))
 
 export default ts.config(
   includeIgnoreFile(gitignorePath),
-  // {
-  //   ignores: [
-  //     '**/.DS_Store',
-  //     '**/node_modules',
-  //     '**/build',
-  //     '.svelte-kit',
-  //     '**/package',
-  //     '**/.env',
-  //     '**/.env.*',
-  //     '!**/.env.example',
-  //     '**/package-lock.json',
-  //   ],
-  // },
   js.configs.recommended,
   ts.configs.eslintRecommended,
   ts.configs.strictTypeChecked,
@@ -47,6 +34,8 @@ export default ts.config(
     },
     rules: {
       '@typescript-eslint/no-non-null-assertion': 0,
+      // Svelte snippets aren't compatible with this.
+      '@typescript-eslint/no-confusing-void-expression': 0,
     },
   },
   {
@@ -56,9 +45,6 @@ export default ts.config(
         parser: ts.parser,
         extraFileExtensions: ['.svelte'],
       },
-    },
-    rules: {
-      'svelte/no-at-html-tags': 0,
     },
   },
 )

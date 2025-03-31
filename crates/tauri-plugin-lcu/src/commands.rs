@@ -7,6 +7,12 @@ use ugg_types::{
 
 use crate::LcuExt;
 
+/// Check if the plugin is connected to the LCU API.
+#[tauri::command]
+pub async fn connected<R: Runtime>(app: AppHandle<R>) -> bool {
+    app.lcu().connected().await
+}
+
 /// Get the current summoner.
 ///
 /// - GET [/lol-summoner/v1/current-summoner](https://www.mingweisamuel.com/lcu-schema/tool/#/Plugin%20lol-summoner/GetLolSummonerV1CurrentSummoner)

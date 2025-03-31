@@ -1,23 +1,41 @@
 import { Channel } from '@tauri-apps/api/core'
-import { writable } from 'svelte/store'
 
-export const newChannel = (onmessage: (response: KruggMessage) => void) => {
-  const chan = new Channel<KruggMessage>()
-  chan.onmessage = onmessage
-  return chan
+export const api = $state<{
+  channel?: Channel<KruggMessage>
+  champs?: ChampionShort[]
+  overview?: { overview: OverviewData; role: Role }
+  matchups?: { matchups: MatchupData; role: Role }
+}>({})
+
+const newChannel = (onmessage: (response: KruggMessage) => void) => {
+  const channel = new Channel<KruggMessage>()
+  channel.onmessage = onmessage
+  return channel
 }
-export const champions = writable<Record<string, ChampionShort> | undefined>()
-export const overview = writable<{ overview: OverviewData; role: Role } | undefined>()
-export const matchups = writable<{ matchups: MatchupData; role: Role } | undefined>()
+
+export const getOrInitChannel = () => {
+  api.channel ??= newChannel((evt) => {
+    switch (evt.type) {
+      case 'champions':
+        api.champs = Object.entries(evt.data)
+          .map(([, champ]) => champ)
+          .toSorted(({ name: a }, { name: b }) => a.localeCompare(b))
+        break
+      case 'overview':
+        api.overview = evt.data
+        break
+      case 'matchups':
+        api.matchups = evt.data
+    }
+  })
+
+  return api.channel
+}
 
 export type KruggMessage =
   | {
       type: 'champions'
       data: Record<string, ChampionShort>
-    }
-  | {
-      type: 'championImages'
-      data: Record<string, number[]>
     }
   | {
       type: 'overview'

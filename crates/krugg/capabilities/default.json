@@ -12,6 +12,7 @@
     "lcu:default",
     "opener:default",
     "positioner:default",
+    "prevent-default:default",
     {
       "identifier": "shell:allow-execute",
       "allow": [

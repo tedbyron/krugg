@@ -3,6 +3,7 @@ import autoprefixer from 'autoprefixer'
 import cssnano from 'cssnano'
 import advancedPreset from 'cssnano-preset-advanced'
 import tailwindcss from 'tailwindcss'
+import icons from 'unplugin-icons/vite'
 import { defineConfig } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 
@@ -26,6 +27,9 @@ export default defineConfig(({ mode }) => {
       watch: {
         ignored: ['**/crate/**'],
       },
+      fs: {
+        allow: ['crates/tauri-plugin-lcu/dist-js'],
+      },
     },
     css: {
       postcss: {
@@ -47,6 +51,11 @@ export default defineConfig(({ mode }) => {
     },
     esbuild: { drop: dev ? undefined : ['console', 'debugger'] },
     plugins: [
+      sveltekit(),
+      icons({
+        autoInstall: true,
+        compiler: 'svelte',
+      }),
       ViteImageOptimizer({
         logStats: false,
         svg: {
@@ -68,7 +77,6 @@ export default defineConfig(({ mode }) => {
           ],
         },
       }),
-      sveltekit(),
     ],
   }
 })

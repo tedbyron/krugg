@@ -1,7 +1,7 @@
 import { listen } from '@tauri-apps/api/event'
 import type { LockFile } from 'tauri-plugin-lcu-api'
 
-export const lcuState = $state<{
+export const lcu = $state<{
   connected: boolean
   lockFile: LockFile | null
   baseUrl: string | null
@@ -11,14 +11,15 @@ export const lcuState = $state<{
   baseUrl: null,
 })
 
-export const listenAll = async () => [
-  await listen<boolean>('lcu-connected', (event) => {
-    lcuState.connected = event.payload
-  }),
-  await listen<LockFile>('lcu-lockfile', (event) => {
-    lcuState.lockFile = event.payload
-  }),
-  await listen<string>('lcu-base-url', (event) => {
-    lcuState.baseUrl = event.payload
-  }),
-]
+export const listenAll = () =>
+  Promise.all([
+    listen<boolean>('lcu-connected', (event) => {
+      lcu.connected = event.payload
+    }),
+    listen<LockFile>('lcu-lockfile', (event) => {
+      lcu.lockFile = event.payload
+    }),
+    listen<string>('lcu-base-url', (event) => {
+      lcu.baseUrl = event.payload
+    }),
+  ])

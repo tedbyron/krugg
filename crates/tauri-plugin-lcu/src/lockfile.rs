@@ -10,7 +10,7 @@ use notify_debouncer_full::{
     notify::{self, EventKind, RecursiveMode},
 };
 use serde::Serialize;
-use tauri::{AppHandle, Emitter, Manager, Runtime, async_runtime};
+use tauri::{AppHandle, Manager, Runtime, async_runtime};
 use tauri_plugin_http::reqwest::Url;
 use tauri_plugin_shell::ShellExt;
 #[cfg(feature = "tauri-plugin-store")]
@@ -18,9 +18,6 @@ use tauri_plugin_store::{JsonValue, StoreExt};
 use tokio::time::{self, Duration};
 
 use crate::LcuState;
-
-/// LCU API username.
-const USERNAME: &str = "riot";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -153,7 +150,7 @@ impl LockFile {
         base_url.set_port(Some(port)).ok()?;
         let auth_header = format!(
             "Basic {}",
-            Base64::encode_string(format!("{USERNAME}:{token}").as_bytes())
+            Base64::encode_string(format!("riot:{token}").as_bytes())
         );
 
         #[cfg(feature = "tauri-plugin-store")]
@@ -210,38 +207,13 @@ impl LockFile {
         Ok((watcher, rx))
     }
 
-    /// Update `LcuState` `lockfile`, `base_url`, and `client` fields.
-    async fn update_state<R: Runtime>(app: &AppHandle<R>, lockfile: Self, url: Url) {
-        let state = app.state::<LcuState>();
-
-        if let Ok(client) = crate::http::client(&lockfile) {
-            {
-                let mut lock = state.client.write().await;
-                *lock = Some(client);
-            }
-            _ = app.emit("lcu-connected", true);
-        }
-
-        {
-            _ = app.emit("lcu-base-url", &url.as_str());
-            let mut lock = state.base_url.write().await;
-            *lock = Some(url);
-        }
-
-        {
-            _ = app.emit("lcu-lockfile", &lockfile);
-            let mut lock = state.lockfile.write().await;
-            *lock = Some(lockfile);
-        }
-    }
-
     /// Watch for file system changes to the LCU lockfile.
     pub fn watch<R: Runtime>(app: &AppHandle<R>) {
         // Get the lockfile path from the store or call Self::path every 5
         // seconds until it returns a path.
         let state = app.state::<LcuState>();
         let path = Self::path_from_store(app).unwrap_or_else(|| {
-            // TODO: don't block main thread lol.
+            // TODO: don't block main thread lol
             tokio::task::block_in_place(move || {
                 async_runtime::block_on(state.tracker.track_future(async {
                     let mut interval = time::interval(Duration::from_secs(5));
@@ -260,7 +232,7 @@ impl LockFile {
         let state = app.state::<LcuState>();
         if let Some((lockfile, url)) = Self::parse(app, &path) {
             async_runtime::block_on(state.tracker.track_future(async {
-                Self::update_state(app, lockfile, url).await;
+                state.update(app, lockfile, url).await;
             }));
         }
 
@@ -269,8 +241,8 @@ impl LockFile {
         let app = app.clone();
         async_runtime::spawn(state.tracker.track_future(async move {
             let (mut watcher, mut rx) = Self::watcher(&app, &path).unwrap();
-            // TODO: panics if the path is set but file doesn't exist yet
-            //       (client not open).
+            // TODO: panics thread if the path is set but file doesn't exist
+            //       yet (client not open)
             watcher.watch(&path, RecursiveMode::NonRecursive).unwrap();
 
             let state = app.state::<LcuState>();
@@ -284,14 +256,14 @@ impl LockFile {
                         while rx.recv().await.is_some() {}
                         break;
                     }
-                    // Update state when the lockfile is modified.
+                    // Update/reset state when the lockfile is created/deleted.
                     Some(msg) = rx.recv() => {
                         if let Some((lockfile, url)) = msg {
                             if Some(&lockfile) != state.lockfile.read().await.as_ref() {
-                                Self::update_state(&app, lockfile, url).await;
+                                state.update(&app, lockfile, url).await;
                             }
                         } else {
-                            _ = app.emit("lcu-connected", false);
+                            state.reset(&app).await;
                         }
                     }
                 }

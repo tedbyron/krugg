@@ -93,6 +93,13 @@ impl<R: Runtime> Lcu<R> {
             .await
     }
 
+    /// Check if the plugin is connected to the LCU API.
+    pub async fn connected(&self) -> bool {
+        let state = self.0.state::<LcuState>();
+        let lock = state.client.read().await;
+        lock.is_some()
+    }
+
     /// Send a GET request and deserialize the response body as JSON.
     pub async fn get<T: DeserializeOwned>(&self, path: &str) -> crate::Result<T> {
         Ok(self.request(Method::GET, path).await?.json().await?)

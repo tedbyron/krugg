@@ -28,6 +28,7 @@ tauri-plugin-autostart = "2.2.0"
 tauri-plugin-global-shortcut = "2.2.0"
 tauri-plugin-opener = "2.2.6"
 tauri-plugin-positioner = { version = "2.2.0", features = ["tray-icon"] }
+tauri-plugin-prevent-default = "1.2.1"
 tauri-plugin-shell = "2.2.0"
 tauri-plugin-single-instance = "2.2.2"
 tauri-plugin-store = "2.2.0"

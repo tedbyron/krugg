@@ -9,6 +9,7 @@ use tauri::{
     App, AppHandle, Listener, Manager, RunEvent, Runtime, async_runtime, tray::TrayIconBuilder,
 };
 use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_prevent_default::Flags;
 use tauri_plugin_store::StoreExt;
 use tokio::task;
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
@@ -57,6 +58,11 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(
+            tauri_plugin_prevent_default::Builder::new()
+                .with_flags(Flags::keyboard().difference(Flags::FOCUS_MOVE | Flags::CONTEXT_MENU))
+                .build(),
+        )
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_lcu::init(STORE_FILE))
         .setup(setup)
@@ -95,7 +101,7 @@ fn setup<R: Runtime>(app: &mut App<R>) -> std::result::Result<(), Box<dyn std::e
 
     #[cfg(debug_assertions)]
     if let Some(win) = app.get_webview_window("main") {
-        // win.open_devtools();
+        win.open_devtools();
 
         // Log events to main window console.
         // TODO: emit messages from plugin after main window ready?
