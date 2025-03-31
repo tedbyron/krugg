@@ -4,7 +4,7 @@ import cssnano from 'cssnano'
 import advancedPreset from 'cssnano-preset-advanced'
 import tailwindcss from 'tailwindcss'
 import icons from 'unplugin-icons/vite'
-import { defineConfig } from 'vite'
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 
 export default defineConfig(({ mode }) => {
@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
         ignored: ['**/crate/**'],
       },
       fs: {
-        allow: ['tauri-plugin-lcu/dist-js'],
+        allow: [searchForWorkspaceRoot(import.meta.dirname), 'tauri-plugin-lcu/dist-js'],
       },
     },
     css: {
