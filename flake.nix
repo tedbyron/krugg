@@ -26,9 +26,6 @@
 
         devShells.default = mkShellNoCC {
           packages = [
-            cargo-edit
-            cargo-features-manager
-            cargo-tauri
             nodejs_22
             rust
           ];

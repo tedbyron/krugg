@@ -38,7 +38,7 @@
   }}
   class="flex flex-col items-center gap-4"
 >
-  <div class="settings-grid grid grid-cols-[repeat(2,auto)] items-center gap-4">
+  <div class="settings-grid grid grid-cols-[repeat(2,auto)] items-center gap-x-8 gap-y-4">
     <div>Lockfile path</div>
     <div>{lockfilePath}</div>
 
@@ -47,18 +47,20 @@
       {#each themes as t (t)}
         <button
           type="button"
-          class={[
-            'border border-r-0 bg-gruvbox-bg px-2 py-1 capitalize first:rounded-l-lg last:rounded-r-lg last:border-r dark:bg-gruvbox-dark-bg',
-            t === theme &&
-              'bg-gruvbox-aqua text-gruvbox-bg-h dark:bg-gruvbox-aqua dark:text-gruvbox-dark-bg-h',
-          ]}
           onclick={() => {
             theme = t
-          }}>{t}</button
+          }}
+          class={[
+            'border border-r-0 px-2 py-1 capitalize first:rounded-l-lg last:rounded-r-lg last:border-r',
+            t === theme ? 'bg-gruvbox-aqua' : 'bg-gruvbox-bg dark:bg-gruvbox-dark-bg',
+          ]}>{t}</button
         >
       {/each}
     </div>
   </div>
 
-  <button class="rounded-lg border px-2 py-1">Save</button>
+  <button
+    class={['rounded-lg border px-2 py-1 transition-colors ease-linear active:bg-gruvbox-aqua']}
+    >Save</button
+  >
 </form>

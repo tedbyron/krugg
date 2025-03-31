@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
         ignored: ['**/crate/**'],
       },
       fs: {
-        allow: ['crates/tauri-plugin-lcu/dist-js'],
+        allow: ['tauri-plugin-lcu/dist-js'],
       },
     },
     css: {

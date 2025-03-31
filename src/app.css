@@ -69,11 +69,8 @@
 
 @layer components {
   .settings-grid {
-    > :nth-child(odd) {
-    }
-
     > :nth-child(even) {
-      /* @apply justify-self-end; */
+      @apply justify-self-end;
     }
   }
 }

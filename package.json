@@ -10,7 +10,7 @@
     "node": ">=22"
   },
   "workspaces": [
-    "crates/tauri-plugin-lcu"
+    "tauri-plugin-lcu"
   ],
   "scripts": {
     "prepare": "svelte-kit sync",

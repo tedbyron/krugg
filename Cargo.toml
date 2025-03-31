@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/*"]
+members = ["src-tauri", "tauri-plugin-lcu"]
 resolver = "3"
 
 [profile.dev]
