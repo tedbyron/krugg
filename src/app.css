@@ -3,19 +3,77 @@
 @tailwind utilities;
 
 @layer base {
+  @font-face {
+    font-family: 'Curlio';
+    font-weight: 400;
+    src: url('$lib/assets/fonts/Iosevkacurlio-normal.woff2') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Curlio';
+    font-weight: 400;
+    font-style: italic;
+    src: url('$lib/assets/fonts/Iosevkacurlio-normalItalic.woff2') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Curlio';
+    font-weight: 700;
+    src: url('$lib/assets/fonts/Iosevkacurlio-normalBold.woff2') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Curlio';
+    font-weight: 700;
+    font-style: italic;
+    src: url('$lib/assets/fonts/Iosevkacurlio-normalBoldItalic.woff2') format('woff2');
+  }
+
   :root,
   body,
   main {
-    @apply min-h-dvh;
+    /* 100dvh - header height - header border. */
+    @apply h-[calc(100dvh-2rem-1px)];
   }
 
   :root {
+    /* Default colors. */
     @apply bg-gruvbox-bg text-gruvbox-fg dark:bg-gruvbox-dark-bg dark:text-gruvbox-dark-fg;
+  }
+
+  body {
+    @apply text-sm;
   }
 
   *,
   ::before,
   ::after {
+    /* Default border color. */
     @apply border-gruvbox-fg dark:border-gruvbox-dark-fg;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-gruvbox-bg dark:bg-gruvbox-dark-bg;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gruvbox-fg hover:bg-gruvbox-fg2 dark:bg-gruvbox-dark-fg dark:hover:bg-gruvbox-dark-fg2;
+  }
+
+  [popover] {
+    justify-self: anchor-center;
+  }
+}
+
+@layer components {
+  .settings-grid {
+    > :nth-child(odd) {
+    }
+
+    > :nth-child(even) {
+      /* @apply justify-self-end; */
+    }
   }
 }

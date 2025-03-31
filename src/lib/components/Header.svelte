@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onNavigate } from '$app/navigation'
+  import { page } from '$app/state'
   import type { Store } from '@tauri-apps/plugin-store'
   import { onMount, type Component } from 'svelte'
   import type { MouseEventHandler, SvelteHTMLElements } from 'svelte/elements'
@@ -7,13 +8,13 @@
   import ArrowLeft from '~icons/tabler/arrow-left'
   import ArrowRight from '~icons/tabler/arrow-right'
   import CircleCheck from '~icons/tabler/circle-check-filled'
+  import Circle from '~icons/tabler/circle-filled'
   import CircleX from '~icons/tabler/circle-x-filled'
+  import Percentage50 from '~icons/tabler/percentage-50'
   import Settings from '~icons/tabler/settings-filled'
-  import LightDark from '~icons/tabler/circle-filled'
-  import System from '~icons/tabler/percentage-50'
 
   import Tooltip from '$components/Tooltip.svelte'
-  import { lcu, loadAppData } from '$lib'
+  import { appData, lcu, type AppData } from '$lib'
 
   interface NavButton {
     name: string
@@ -24,12 +25,12 @@
   }
 
   const themes = [
-    { name: 'system', component: System },
-    { name: 'light', component: LightDark },
-    { name: 'dark', component: LightDark },
-  ] as const
+    { name: 'system', component: Percentage50 },
+    { name: 'light', component: Circle },
+    { name: 'dark', component: Circle },
+  ] as const satisfies { name: AppData['theme']; component: Component<SvelteHTMLElements['svg']> }[]
 
-  let appData: Store | undefined
+  let store: Store | undefined
   let theme = $state.raw<(typeof themes)[number]>(themes[0])
   let lcuConnection = $state.raw({
     component: CircleX,
@@ -41,8 +42,7 @@
       name: 'Back',
       component: ArrowLeft,
       disabled: !window.navigation.canGoBack,
-      onclick: (evt) => {
-        evt.preventDefault()
+      onclick: () => {
         window.navigation.back()
       },
     },
@@ -50,8 +50,7 @@
       name: 'Forward',
       component: ArrowRight,
       disabled: !window.navigation.canGoForward,
-      onclick: (evt) => {
-        evt.preventDefault()
+      onclick: () => {
         window.navigation.forward()
       },
     },
@@ -59,17 +58,15 @@
   const rightNav: NavButton[] = $state([
     {
       name: 'Theme',
-      component: System,
-      onclick: (evt) => {
-        evt.preventDefault()
+      component: Percentage50,
+      onclick: () => {
         theme = themes[(themes.findIndex(({ name }) => name === theme.name) + 1) % themes.length]!
       },
     },
     {
       name: 'Settings',
       component: Settings,
-      onclick: (evt) => {
-        evt.preventDefault()
+      onclick: () => {
         window.location.href = '/settings'
       },
     },
@@ -83,7 +80,7 @@
         (theme.name === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches),
     )
     rightNav[0]!.component = theme.component
-    appData?.set('theme', theme.name).catch(console.error)
+    store?.set('theme', theme.name).catch(console.error)
   })
 
   // Update LCU connection status icon
@@ -106,23 +103,27 @@
   onMount(async () => {
     lcu.connected = await connected()
 
-    appData = await loadAppData()
-    const storedTheme = await appData.get<(typeof themes)[number]['name']>('theme')
-    if (storedTheme !== undefined) {
+    store = await appData()
+    const storedTheme = await store.get<AppData['theme']>('theme')
+    if (storedTheme === undefined) {
+      await store.set('theme', theme.name)
+    } else {
       theme = themes.find(({ name }) => name === storedTheme)!
     }
   })
 
+  // Conditionally disable back/forward buttons
   onNavigate(() => {
     leftNav[0]!.disabled = !window.navigation.canGoBack
     leftNav[1]!.disabled = !window.navigation.canGoForward
   })
 </script>
 
-{#snippet navButtons(list: NavButton[])}
-  <nav class="flex gap-2">
-    {#each list as btn (btn.name)}
+{#snippet navButtons(buttons: NavButton[])}
+  <nav class="flex gap-4">
+    {#each buttons as btn (btn.name)}
       <button
+        type="button"
         disabled={btn.disabled}
         onclick={btn.onclick}
         class={[
@@ -131,7 +132,7 @@
         ]}
       >
         {#if btn.component !== undefined}
-          <btn.component class="h-4" />
+          <btn.component />
         {:else}
           {btn.name}
         {/if}
@@ -140,15 +141,16 @@
   </nav>
 {/snippet}
 
-<header
-  class="sticky top-0 flex items-center gap-2 border-b bg-gruvbox-bg px-2 dark:bg-gruvbox-dark-bg"
->
+<header class="flex items-center gap-4 border-b bg-gruvbox-bg px-3 dark:bg-gruvbox-dark-bg">
   <!-- Left nav buttons -->
   {@render navButtons(leftNav)}
 
+  <!-- Page title -->
+  <div class="ml-2 leading-none">{page.data.title}</div>
+
   <!-- LCU connection status icon -->
-  <Tooltip text={lcuConnection.text} class="ml-auto py-2">
-    <lcuConnection.component class={['h-4', lcuConnection.class]} />
+  <Tooltip text={lcuConnection.text} class="ml-auto py-2" tooltipClass="pt-1.5">
+    <lcuConnection.component class={lcuConnection.class} />
   </Tooltip>
 
   <!-- Right nav buttons -->

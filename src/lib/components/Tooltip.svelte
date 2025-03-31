@@ -5,10 +5,11 @@
   interface Props {
     text: string
     class?: ClassValue
+    tooltipClass?: ClassValue
     children: Snippet
   }
 
-  const { text, class: className, children }: Props = $props()
+  const { text, class: className, tooltipClass, children }: Props = $props()
   const buttonId = crypto.randomUUID()
   const divId = crypto.randomUUID()
 
@@ -16,6 +17,7 @@
 </script>
 
 <button
+  type="button"
   id={buttonId}
   popovertarget={divId}
   onclick={(evt) => {
@@ -43,7 +45,10 @@
   id={divId}
   anchor={buttonId}
   popover
-  class="absolute bottom-[anchor(center)] m-0 bg-gruvbox-bg dark:bg-gruvbox-dark-bg"
+  class={[
+    'absolute bottom-[anchor(center)] m-0 bg-gruvbox-bg text-gruvbox-fg dark:bg-gruvbox-dark-bg dark:text-gruvbox-dark-fg',
+    tooltipClass,
+  ]}
 >
   {text}
 </div>

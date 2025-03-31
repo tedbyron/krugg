@@ -31,10 +31,8 @@
   })
 </script>
 
-<main class="flex flex-col gap-2">
-  <Header />
+<Header />
 
-  <div class="container">
-    {@render children?.()}
-  </div>
+<main class="overflow-auto py-2">
+  {@render children?.()}
 </main>

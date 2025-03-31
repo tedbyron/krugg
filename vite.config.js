@@ -55,6 +55,8 @@ export default defineConfig(({ mode }) => {
       icons({
         autoInstall: true,
         compiler: 'svelte',
+        // Font size is 0.875rem (14pt), but we want icons to be 1rem.
+        scale: parseFloat((1 / 0.875).toFixed(2)),
       }),
       ViteImageOptimizer({
         logStats: false,

@@ -12,4 +12,8 @@ export const load: PageLoad = async () => {
       error.getChampions()
     }
   }
+
+  return {
+    title: 'Champions',
+  }
 }

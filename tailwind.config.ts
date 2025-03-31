@@ -78,6 +78,10 @@ export default {
       container: {
         center: true,
       },
+      fontFamily: {
+        sans: 'Curlio',
+        mono: 'Curlio',
+      },
     },
   },
 } satisfies Config
