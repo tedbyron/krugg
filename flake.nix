@@ -1,5 +1,5 @@
 {
-  description = "Alternative client for u.gg";
+  description = "League of Legends build helper";
 
   inputs.rust-overlay = {
     url = "github:oxalica/rust-overlay";

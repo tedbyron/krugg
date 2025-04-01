@@ -1,6 +1,6 @@
 # krugg
 
-Alternative client for u.gg
+League of Legends build helper
 
 ## Dev
 

@@ -10,23 +10,23 @@ export const api = $state<{
 
 export const newChannel = () => {
   api.channel = new Channel<KruggMessage>()
-  api.channel.onmessage = (evt) => {
-    console.log('Channel event: type:', evt.type, ', data:', evt.data)
+  api.channel.onmessage = ({ type, data }) => {
+    console.log('Channel event: type:', type, ', data:', data)
 
-    switch (evt.type) {
+    switch (type) {
       case 'champions':
-        api.champs = Object.entries(evt.data)
+        api.champs = Object.entries(data)
           .map(([, champ]) => champ)
           .toSorted(({ name: a }, { name: b }) => a.localeCompare(b))
         break
       case 'champion':
-        api.champ = evt.data
+        api.champ = data
         break
       case 'overview':
-        api.overview = evt.data
+        api.overview = data
         break
       case 'matchups':
-        api.matchups = evt.data
+        api.matchups = data
     }
   }
 

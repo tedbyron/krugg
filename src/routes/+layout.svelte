@@ -28,6 +28,10 @@
   })
 </script>
 
+<svelte:head>
+  <link rel="dns-prefetch" href="https://cdn.communitydragon.org" />
+</svelte:head>
+
 <Header />
 
 <main class="overflow-auto py-2">
