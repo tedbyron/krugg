@@ -5,6 +5,10 @@ export default {
   darkMode: 'selector',
   theme: {
     extend: {
+      animation: {
+        zoom: 'zoom 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+        fade: 'fade 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+      },
       colors: {
         'gruvbox-dark': {
           bg: '#282828',
@@ -81,6 +85,24 @@ export default {
       fontFamily: {
         sans: 'Curlio',
         mono: 'Curlio',
+      },
+      keyframes: {
+        zoom: {
+          '0%': {
+            transform: 'scale(0.95)',
+          },
+          '100%': {
+            transform: 'scale(1)',
+          },
+        },
+        fade: {
+          '0%': {
+            opacity: '0',
+          },
+          '100%': {
+            opacity: '1',
+          },
+        },
       },
     },
   },

@@ -219,8 +219,8 @@ impl DdragonClientWrapper {
             .collect())
     }
 
-    pub async fn get_champion(&self, key: &str) -> crate::Result<Champion> {
-        self.ddragon.get_champion(key).await
+    pub async fn get_champion(&self, id: &str) -> crate::Result<Box<Champion>> {
+        self.ddragon.get_champion(id).await
     }
 
     pub async fn get_image_of<T: HasImage + Sync>(&self, item: &T) -> crate::Result<DynamicImage> {

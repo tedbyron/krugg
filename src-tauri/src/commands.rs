@@ -23,3 +23,17 @@ pub async fn get_champions(app: AppHandle, channel: Channel<KruggMessage>) -> cr
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn get_champion(
+    app: AppHandle,
+    channel: Channel<KruggMessage>,
+    id: &str,
+) -> crate::Result<()> {
+    let state = app.state::<State>();
+    let ddragon = state.client.ddragon();
+    let champ = ddragon.get_champion(id).await?;
+    channel.send(KruggMessage::Champion(champ))?;
+
+    Ok(())
+}

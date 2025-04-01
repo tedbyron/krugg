@@ -10,11 +10,11 @@ League of Legends client (LCU) API client for tauri.
 - Available commands: see [`build.rs`](./build.rs)
 - Events:
 
-  | name            | payload                                               |
-  | --------------- | ----------------------------------------------------- |
-  | `lcu-connected` | `boolean`                                             |
-  | `lcu-lockfile`  | [`LockFile`](tauri-plugin-lcu/lib/index.ts) \| `null` |
-  | `lcu-base-url`  | `string` \| `null`                                    |
+  | name            | payload                                |
+  | --------------- | -------------------------------------- |
+  | `lcu-connected` | `boolean`                              |
+  | `lcu-lockfile`  | [`LockFile`](./lib/index.ts) \| `null` |
+  | `lcu-base-url`  | `string` \| `null`                     |
 
 ### Setup
 
@@ -22,9 +22,7 @@ League of Legends client (LCU) API client for tauri.
 // src-tauri/capabilities/default.json
 {
   // ...
-  "permissions": [
-    "lcu:default"
-  ]
+  "permissions": ["lcu:default"],
 }
 ```
 
@@ -46,12 +44,13 @@ pub fn run() {
 
 #### Rust
 
+<!-- TODO -->
+
 ```rs
 //! src-tauri/my_command.rs
 use tauri_plugin_lcu::LcuExt;
 
 #[tauri::command]
-// TODO
 ```
 
 #### JS

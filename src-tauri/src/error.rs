@@ -29,7 +29,7 @@ pub enum Error {
 pub enum DdragonError {
     #[error("Failed to get the latest API version")]
     NoLatestVersion,
-    #[error("Failed to get champion data for key: {0}")]
+    #[error("Failed to get champion data for id: {0}")]
     NoChampionData(String),
 }
 

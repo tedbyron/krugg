@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { invoke } from '@tauri-apps/api/core'
   import { onMount } from 'svelte'
 
+  import { showMainWindow } from '$lib'
+
   onMount(async () => {
-    await invoke('show_main_window')
+    await showMainWindow()
   })
 </script>
 

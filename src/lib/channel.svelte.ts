@@ -3,23 +3,24 @@ import { Channel } from '@tauri-apps/api/core'
 export const api = $state<{
   channel?: Channel<KruggMessage>
   champs?: ChampionShort[]
+  champ?: Champion
   overview?: { overview: OverviewData; role: Role }
   matchups?: { matchups: MatchupData; role: Role }
 }>({})
 
-const newChannel = (onmessage: (response: KruggMessage) => void) => {
-  const channel = new Channel<KruggMessage>()
-  channel.onmessage = onmessage
-  return channel
-}
+export const newChannel = () => {
+  api.channel = new Channel<KruggMessage>()
+  api.channel.onmessage = (evt) => {
+    console.log('Channel event: type:', evt.type, ', data:', evt.data)
 
-export const getOrInitChannel = () => {
-  api.channel ??= newChannel((evt) => {
     switch (evt.type) {
       case 'champions':
         api.champs = Object.entries(evt.data)
           .map(([, champ]) => champ)
           .toSorted(({ name: a }, { name: b }) => a.localeCompare(b))
+        break
+      case 'champion':
+        api.champ = evt.data
         break
       case 'overview':
         api.overview = evt.data
@@ -27,7 +28,7 @@ export const getOrInitChannel = () => {
       case 'matchups':
         api.matchups = evt.data
     }
-  })
+  }
 
   return api.channel
 }
@@ -36,6 +37,10 @@ export type KruggMessage =
   | {
       type: 'champions'
       data: Record<string, ChampionShort>
+    }
+  | {
+      type: 'champion'
+      data: Champion
     }
   | {
       type: 'overview'
@@ -170,4 +175,62 @@ export interface Matchup {
   wins: number
   matches: number
   winrate: number
+}
+
+export interface Champion {
+  id: string
+  key: string
+  name: string
+  title: string
+  image: Image
+  skins: Skin[]
+  lore: string
+  blurb: string
+  allytips: string[]
+  enemytips: string[]
+  tags: Tag[]
+  partype: string
+  info: Info
+  stats: Record<string, number>
+  spells: Spell[]
+  passive: Passive
+}
+
+export interface Skin {
+  id: string
+  num: number
+  name: string
+  chromas: boolean
+}
+
+export interface Spell {
+  id: string
+  name: string
+  description: string
+  tooltip: string
+  leveltip: LevelTip | null
+  maxrank: number
+  cooldown: number[]
+  cooldownBurn: string
+  cost: number[]
+  costBurn: string
+  effect: (number[] | null)[]
+  effectBurn: (string | null)[]
+  costType: string
+  maxammo: string
+  range: number[]
+  rangeBurn: string
+  image: Image
+  resource: string | null
+}
+
+export interface LevelTip {
+  label: string[]
+  effect: string[]
+}
+
+export interface Passive {
+  name: string
+  description: string
+  image: Image
 }

@@ -1,31 +1,11 @@
 <script lang="ts">
-  import type { Store } from '@tauri-apps/plugin-store'
-  import { onMount } from 'svelte'
-
-  import { appData, type AppData } from '$lib'
   import { onNavigate } from '$app/navigation'
+  import type { Store } from '@tauri-apps/plugin-store'
 
-  const themes = ['system', 'light', 'dark'] as const satisfies AppData['theme'][]
+  import { appState, themes } from '$lib'
 
   let store: Store | undefined
   let lockfilePath = $state.raw<string>()
-  let theme = $state.raw<AppData['theme']>('system')
-
-  $effect(() => {
-    document.documentElement.classList.toggle(
-      'dark',
-      theme === 'dark' ||
-        (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches),
-    )
-    store?.set('theme', theme).catch(console.error)
-  })
-
-  onMount(async () => {
-    store = await appData()
-    lockfilePath = await store.get<string>('lockfile_path')
-    // Always set by Header component on mount.
-    theme = (await store.get<AppData['theme']>('theme'))!
-  })
 
   onNavigate(async () => {
     await store?.save()
@@ -38,29 +18,33 @@
   }}
   class="flex flex-col items-center gap-4"
 >
+  <!-- Options -->
   <div class="settings-grid grid grid-cols-[repeat(2,auto)] items-center gap-x-8 gap-y-4">
     <div>Lockfile path</div>
     <div>{lockfilePath}</div>
 
+    <!-- Theme state changes are handled in Header.svelte -->
     <div>Theme</div>
     <div>
       {#each themes as t (t)}
         <button
           type="button"
           onclick={() => {
-            theme = t
+            appState.theme = t
           }}
           class={[
             'border border-r-0 px-2 py-1 capitalize first:rounded-l-lg last:rounded-r-lg last:border-r',
-            t === theme ? 'bg-gruvbox-aqua' : 'bg-gruvbox-bg dark:bg-gruvbox-dark-bg',
+            t === appState.theme ? 'bg-gruvbox-aqua' : 'bg-gruvbox-bg dark:bg-gruvbox-dark-bg',
           ]}>{t}</button
         >
       {/each}
     </div>
   </div>
 
-  <button
-    class={['rounded-lg border px-2 py-1 transition-colors ease-linear active:bg-gruvbox-aqua']}
-    >Save</button
-  >
+  <!-- Save button -->
+  <div>
+    <button class={['rounded-lg border px-2 py-1 transition-colors active:bg-gruvbox-aqua']}
+      >Save</button
+    >
+  </div>
 </form>

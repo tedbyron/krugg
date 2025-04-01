@@ -89,24 +89,10 @@ impl<'a> ClientBuilder<'a> {
         self
     }
 
-    async fn get(client: ClientType, url: Url) -> crate::Result<Box<[String]>> {
+    async fn get(client: &ClientType, url: Url) -> crate::Result<Vec<String>> {
         Ok(match client {
-            ClientType::Middleware(client) => {
-                client
-                    .get(url)
-                    .send()
-                    .await?
-                    .json::<Box<[String]>>()
-                    .await?
-            }
-            ClientType::Plain(client) => {
-                client
-                    .get(url)
-                    .send()
-                    .await?
-                    .json::<Box<[String]>>()
-                    .await?
-            }
+            ClientType::Middleware(client) => client.get(url).send().await?.json().await?,
+            ClientType::Plain(client) => client.get(url).send().await?.json().await?,
         })
     }
 
@@ -120,17 +106,21 @@ impl<'a> ClientBuilder<'a> {
             ClientType::Plain(ReqwestClient::builder().brotli(true).build()?)
         };
         let base_url = Url::parse(self.base_url)?;
-        let versions = Self::get(client.clone(), base_url.join("/api/versions.json")?).await?;
+        let mut versions = Self::get(&client, base_url.join("/api/versions.json")?).await?;
         let version = match self.version {
             Some(v) if versions.iter().any(|version| version == v) => v.to_string(),
-            _ => versions
-                .first() // List is sorted by version number descending
-                .cloned()
-                .ok_or(DdragonError::NoLatestVersion)?,
+            _ => {
+                if versions.is_empty() {
+                    return Err(DdragonError::NoLatestVersion.into());
+                } else {
+                    // List is sorted by version number descending
+                    versions.swap_remove(0)
+                }
+            }
         };
         let locale = match self.locale {
             Some(l)
-                if Self::get(client.clone(), base_url.join("/cdn/languages.json")?)
+                if Self::get(&client, base_url.join("/cdn/languages.json")?)
                     .await?
                     .iter()
                     .any(|lang| lang == l) =>
@@ -232,14 +222,14 @@ impl Client {
         get_tft_traits: "tft-trait", Traits,
     }
 
-    pub async fn get_champion(&self, key: &str) -> crate::Result<Champion> {
+    pub async fn get_champion(&self, id: &str) -> crate::Result<Box<Champion>> {
         Ok(self
-            .get::<ChampionWrapper>(&format!("./champion/{key}.json"))
+            .get::<ChampionWrapper>(&format!("./champion/{id}.json"))
             .await?
             .data
-            .get(key)
-            .cloned()
-            .ok_or_else(|| DdragonError::NoChampionData(key.to_owned()))?)
+            .remove(id)
+            .map(Box::new)
+            .ok_or_else(|| DdragonError::NoChampionData(id.to_owned()))?)
     }
 
     async fn get_image(&self, path: Url) -> crate::Result<DynamicImage> {

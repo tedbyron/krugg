@@ -3,13 +3,13 @@
   import type { ClassValue } from 'svelte/elements'
 
   interface Props {
-    text: string
     class?: ClassValue
     tooltipClass?: ClassValue
+    target: Snippet
     children: Snippet
   }
 
-  const { text, class: className, tooltipClass, children }: Props = $props()
+  const { class: className, tooltipClass, target, children }: Props = $props()
   const buttonId = crypto.randomUUID()
   const divId = crypto.randomUUID()
 
@@ -37,7 +37,7 @@
   }}
   class={['cursor-default', className]}
 >
-  {@render children()}
+  {@render target()}
 </button>
 
 <div
@@ -50,5 +50,5 @@
     tooltipClass,
   ]}
 >
-  {text}
+  {@render children()}
 </div>

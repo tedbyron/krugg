@@ -1,10 +1,16 @@
 import { Store } from '@tauri-apps/plugin-store'
+import type { Theme } from '$lib'
 
-export interface AppData {
+export const appState = $state<{
+  theme: Theme
+}>({
+  theme: 'system',
+})
+
+export type AppData = Partial<{
   lockfile_path: string
-
-  theme: 'system' | 'light' | 'dark'
-}
+  theme: Theme
+}>
 
 const stores = $state<{
   appData: Store | null
@@ -12,7 +18,7 @@ const stores = $state<{
   appData: null,
 })
 
-export const appData = async () => {
+export const loadAppData = async () => {
   stores.appData ??= await Store.load('app_data.json')
   return stores.appData
 }

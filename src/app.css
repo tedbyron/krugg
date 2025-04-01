@@ -56,7 +56,7 @@
     @apply w-2;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-gruvbox-bg dark:bg-gruvbox-dark-bg;
+    @apply bg-transparent;
   }
   ::-webkit-scrollbar-thumb {
     @apply bg-gruvbox-fg hover:bg-gruvbox-fg2 dark:bg-gruvbox-dark-fg dark:hover:bg-gruvbox-dark-fg2;

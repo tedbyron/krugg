@@ -41,7 +41,8 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             commands::show_main_window,
-            commands::get_champions
+            commands::get_champions,
+            commands::get_champion,
         ])
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
@@ -109,7 +110,7 @@ fn setup<R: Runtime>(app: &mut App<R>) -> std::result::Result<(), Box<dyn std::e
             let w = win.clone();
             win.listen(evt, move |e| {
                 _ = w.eval(&format!(
-                    "console.log('Event: name: {:?}, payload: {}')",
+                    "console.log('Event: name: {}, payload: {}')",
                     evt,
                     e.payload(),
                 ));

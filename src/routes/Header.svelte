@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onNavigate } from '$app/navigation'
+  import { goto, onNavigate } from '$app/navigation'
   import { page } from '$app/state'
   import type { Store } from '@tauri-apps/plugin-store'
   import { onMount, type Component } from 'svelte'
@@ -14,7 +14,7 @@
   import Settings from '~icons/tabler/settings-filled'
 
   import Tooltip from '$components/Tooltip.svelte'
-  import { appData, lcu, type AppData } from '$lib'
+  import { loadAppData, appState, lcu, themes, type AppData } from '$lib'
 
   interface NavButton {
     name: string
@@ -24,14 +24,16 @@
     onclick: MouseEventHandler<HTMLButtonElement>
   }
 
-  const themes = [
-    { name: 'system', component: Percentage50 },
-    { name: 'light', component: Circle },
-    { name: 'dark', component: Circle },
-  ] as const satisfies { name: AppData['theme']; component: Component<SvelteHTMLElements['svg']> }[]
+  const themeIcons = Object.fromEntries<Component<SvelteHTMLElements['svg']>>(
+    themes.map((name) => [name, name === 'system' ? Percentage50 : Circle]),
+  )
+  // const themes = [
+  //   { name: 'system', component: Percentage50 },
+  //   { name: 'light', component: Circle },
+  //   { name: 'dark', component: Circle },
+  // ] as const satisfies { name: AppData['theme']; component: Component<SvelteHTMLElements['svg']> }[]
 
-  let store: Store | undefined
-  let theme = $state.raw<(typeof themes)[number]>(themes[0])
+  let appData: Store | undefined
   let lcuConnection = $state.raw({
     component: CircleX,
     text: 'League client disconnected',
@@ -60,14 +62,15 @@
       name: 'Theme',
       component: Percentage50,
       onclick: () => {
-        theme = themes[(themes.findIndex(({ name }) => name === theme.name) + 1) % themes.length]!
+        appState.theme =
+          themes[(themes.findIndex((name) => name === appState.theme) + 1) % themes.length]!
       },
     },
     {
       name: 'Settings',
       component: Settings,
       onclick: () => {
-        window.location.href = '/settings'
+        goto('/settings').catch(console.error)
       },
     },
   ])
@@ -76,11 +79,11 @@
   $effect(() => {
     document.documentElement.classList.toggle(
       'dark',
-      theme.name === 'dark' ||
-        (theme.name === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches),
+      appState.theme === 'dark' ||
+        (appState.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches),
     )
-    rightNav[0]!.component = theme.component
-    store?.set('theme', theme.name).catch(console.error)
+    rightNav[0]!.component = themeIcons[appState.theme]
+    appData?.set('theme', appState.theme).catch(console.error)
   })
 
   // Update LCU connection status icon
@@ -103,12 +106,12 @@
   onMount(async () => {
     lcu.connected = await connected()
 
-    store = await appData()
-    const storedTheme = await store.get<AppData['theme']>('theme')
+    appData = await loadAppData()
+    const storedTheme = await appData.get<AppData['theme']>('theme')
     if (storedTheme === undefined) {
-      await store.set('theme', theme.name)
+      await appData.set('theme', appState.theme)
     } else {
-      theme = themes.find(({ name }) => name === storedTheme)!
+      appState.theme = themes.find((name) => name === storedTheme)!
     }
   })
 
@@ -149,8 +152,12 @@
   <div class="ml-2 leading-none">{page.data.title}</div>
 
   <!-- LCU connection status icon -->
-  <Tooltip text={lcuConnection.text} class="ml-auto py-2" tooltipClass="pt-1.5">
-    <lcuConnection.component class={lcuConnection.class} />
+  <Tooltip class="ml-auto py-2" tooltipClass="pt-1.5">
+    {#snippet target()}
+      <lcuConnection.component class={lcuConnection.class} />
+    {/snippet}
+
+    {lcuConnection.text}
   </Tooltip>
 
   <!-- Right nav buttons -->
