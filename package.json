@@ -76,9 +76,7 @@
       }
     ]
   },
-  "browserslist": {
-    "production": [
-      "defaults"
-    ]
-  }
+  "browserslist": [
+    "defaults and fully supports es6-module"
+  ]
 }
