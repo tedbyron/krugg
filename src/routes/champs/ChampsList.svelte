@@ -47,12 +47,14 @@
         }}
         class="group flex flex-col items-center gap-0.5 rounded-lg"
       >
-        <img
-          src="https://cdn.communitydragon.org/{champ.version}/champion/{champ.key}/square"
-          alt="{champ.name} tile"
-          width={100}
-          class="rounded-lg transition-transform group-hover:scale-105"
-        />
+        <div class="max-w-[100px] overflow-hidden transition-transform group-hover:scale-105">
+          <img
+            src="https://cdn.communitydragon.org/{champ.version}/champion/{champ.key}/square"
+            alt="{champ.name} tile"
+            width={100}
+            class="scale-[1.15]"
+          />
+        </div>
 
         <!-- TODO: nunu name too long -->
         <div class="text-center">{champ.name}</div>
