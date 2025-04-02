@@ -1,24 +1,24 @@
 # tauri-plugin-lcu
 
-League of Legends client (LCU) API client for tauri.
+League of Legends client (LCU) API client for tauri
 
 - Tauri plugin dependencies
   - `tauri-plugin-http`
   - `tauri-plugin-shell`
-    - Uses `WMIC.exe` on Windows or `ps` on macOS to find the League install dir.
+    - Uses `WMIC.exe` on Windows or `ps` on macOS to find the League install dir
   - `tauri-plugin-store`
     - optional, used to store LCU lockfile path
 
 ## Usage
 
-- Available commands: see [`build.rs`](./build.rs)
+- Commands: see [`build.rs`](./build.rs)
 - Events:
 
   | name            | payload                                |
   | --------------- | -------------------------------------- |
   | `lcu-connected` | `boolean`                              |
-  | `lcu-lockfile`  | [`LockFile`](./lib/index.ts) \| `null` |
-  | `lcu-base-url`  | `string` \| `null`                     |
+  | `lcu-lockfile`  | [`LockFile`](./lib/index.ts) `\| null` |
+  | `lcu-base-url`  | `string \| null`                       |
 
 ### Setup
 
