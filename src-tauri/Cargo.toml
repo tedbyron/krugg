@@ -8,7 +8,7 @@ authors = ["ted@ted.ooo"]
 repository = "https://github.com/tedbyron/krugg"
 
 [lib]
-# https://github.com/rust-lang/cargo/issues/8519
+# BUG: https://github.com/rust-lang/cargo/issues/8519
 name = "krugg_lib"
 
 [build-dependencies]

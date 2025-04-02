@@ -31,6 +31,8 @@
   class="h-[95dvh] max-h-[95dvh] w-[95dvw] max-w-screen-md border bg-gruvbox-bg text-gruvbox-fg backdrop:bg-gruvbox-fg/80 open:animate-zoom open:backdrop:animate-fade dark:bg-gruvbox-dark-bg dark:text-gruvbox-dark-fg dark:backdrop:bg-gruvbox-dark-bg/80"
 >
   {#if champShort !== undefined && api.champ !== undefined}
+    {@const srcId = champShort.id.toLowerCase()}
+
     <div class="max-h-[calc(95dvh-4px)] max-w-[calc(95dvw-4px)]">
       <header
         class="sticky top-0 z-10 flex items-center border-b bg-gruvbox-bg px-2 dark:bg-gruvbox-dark-bg"
@@ -45,9 +47,10 @@
       </header>
 
       <!-- Hero -->
+      <!-- TODO: ambessa url weird? -->
       <div class="relative">
         <img
-          src="https://cdn.communitydragon.org/{champShort.version}/champion/{champShort.key}/splash-art"
+          src="https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/assets/characters/{srcId}/skins/base/images/{srcId}_splash_centered_0.jpg"
           alt={champShort.name}
           class="hero"
         />

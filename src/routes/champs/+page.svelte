@@ -20,18 +20,6 @@
   })
 </script>
 
-<svelte:head>
-  <!-- Preload splash art -->
-  {#each filteredChamps ?? [] as champ (champ.id)}
-    <link
-      rel="preload"
-      href="https://cdn.communitydragon.org/{champ.version}/champion/{champ.key}/splash-art"
-      as="image"
-      type="image/jpeg"
-    />
-  {/each}
-</svelte:head>
-
 {#if filteredChamps !== undefined}
   <ChampsList champs={filteredChamps} bind:selectedChamp bind:search />
 {/if}

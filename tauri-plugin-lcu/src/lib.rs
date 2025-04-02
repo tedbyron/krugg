@@ -7,6 +7,7 @@ use tauri::{
     async_runtime::{self, RwLock},
     plugin::{Builder, TauriPlugin},
 };
+use tokio::task;
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
 
 mod commands;
@@ -86,7 +87,7 @@ fn _init<R: Runtime, S: ToString>(store_file: Option<S>) -> TauriPlugin<R> {
             state.cancel_token.cancel();
             state.tracker.close();
 
-            tokio::task::block_in_place(move || {
+            task::block_in_place(move || {
                 async_runtime::block_on(async {
                     state.tracker.wait().await;
                 });

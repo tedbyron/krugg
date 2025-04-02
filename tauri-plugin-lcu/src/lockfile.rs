@@ -15,7 +15,10 @@ use tauri_plugin_http::reqwest::Url;
 use tauri_plugin_shell::ShellExt;
 #[cfg(feature = "tauri-plugin-store")]
 use tauri_plugin_store::{JsonValue, StoreExt};
-use tokio::time::{self, Duration};
+use tokio::{
+    task,
+    time::{self, Duration},
+};
 
 use crate::LcuState;
 
@@ -214,7 +217,7 @@ impl LockFile {
         let state = app.state::<LcuState>();
         let path = Self::path_from_store(app).unwrap_or_else(|| {
             // TODO: don't block main thread lol
-            tokio::task::block_in_place(move || {
+            task::block_in_place(move || {
                 async_runtime::block_on(state.tracker.track_future(async {
                     let mut interval = time::interval(Duration::from_secs(5));
 

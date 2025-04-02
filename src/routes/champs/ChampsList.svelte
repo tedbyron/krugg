@@ -11,6 +11,8 @@
   let { champs, search = $bindable(), selectedChamp = $bindable() }: Props = $props()
 </script>
 
+<!-- TODO: hover preload splash art -->
+
 <div class="container flex flex-col gap-2">
   <div class="relative mx-auto w-1/2 max-w-md">
     <!-- Search input -->
@@ -47,9 +49,11 @@
         }}
         class="group flex flex-col items-center gap-0.5 rounded-lg"
       >
-        <div class="max-w-[100px] overflow-hidden transition-transform group-hover:scale-105">
+        <div
+          class="max-w-[100px] overflow-hidden rounded-lg transition-transform group-hover:scale-105"
+        >
           <img
-            src="https://cdn.communitydragon.org/{champ.version}/champion/{champ.key}/square"
+            src="https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/{champ.key}.png"
             alt="{champ.name} tile"
             width={100}
             class="scale-[1.15]"

@@ -29,7 +29,7 @@
 </script>
 
 <svelte:head>
-  <link rel="dns-prefetch" href="https://cdn.communitydragon.org" />
+  <link rel="dns-prefetch" href="https://raw.communitydragon.org" />
 </svelte:head>
 
 <Header />

@@ -297,107 +297,128 @@
         {
           "description": "Enables the connected command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-connected"
+          "const": "allow-connected",
+          "markdownDescription": "Enables the connected command without any pre-configured scope."
         },
         {
           "description": "Denies the connected command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-connected"
+          "const": "deny-connected",
+          "markdownDescription": "Denies the connected command without any pre-configured scope."
         },
         {
           "description": "Enables the delete command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-delete"
+          "const": "allow-delete",
+          "markdownDescription": "Enables the delete command without any pre-configured scope."
         },
         {
           "description": "Denies the delete command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-delete"
+          "const": "deny-delete",
+          "markdownDescription": "Denies the delete command without any pre-configured scope."
         },
         {
           "description": "Enables the get command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-get"
+          "const": "allow-get",
+          "markdownDescription": "Enables the get command without any pre-configured scope."
         },
         {
           "description": "Denies the get command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-get"
+          "const": "deny-get",
+          "markdownDescription": "Denies the get command without any pre-configured scope."
         },
         {
           "description": "Enables the get_current_rune_page command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-get-current-rune-page"
+          "const": "allow-get-current-rune-page",
+          "markdownDescription": "Enables the get_current_rune_page command without any pre-configured scope."
         },
         {
           "description": "Denies the get_current_rune_page command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-get-current-rune-page"
+          "const": "deny-get-current-rune-page",
+          "markdownDescription": "Denies the get_current_rune_page command without any pre-configured scope."
         },
         {
           "description": "Enables the get_current_summoner command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-get-current-summoner"
+          "const": "allow-get-current-summoner",
+          "markdownDescription": "Enables the get_current_summoner command without any pre-configured scope."
         },
         {
           "description": "Denies the get_current_summoner command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-get-current-summoner"
+          "const": "deny-get-current-summoner",
+          "markdownDescription": "Denies the get_current_summoner command without any pre-configured scope."
         },
         {
           "description": "Enables the head command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-head"
+          "const": "allow-head",
+          "markdownDescription": "Enables the head command without any pre-configured scope."
         },
         {
           "description": "Denies the head command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-head"
+          "const": "deny-head",
+          "markdownDescription": "Denies the head command without any pre-configured scope."
         },
         {
           "description": "Enables the patch command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-patch"
+          "const": "allow-patch",
+          "markdownDescription": "Enables the patch command without any pre-configured scope."
         },
         {
           "description": "Denies the patch command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-patch"
+          "const": "deny-patch",
+          "markdownDescription": "Denies the patch command without any pre-configured scope."
         },
         {
           "description": "Enables the post command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-post"
+          "const": "allow-post",
+          "markdownDescription": "Enables the post command without any pre-configured scope."
         },
         {
           "description": "Denies the post command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-post"
+          "const": "deny-post",
+          "markdownDescription": "Denies the post command without any pre-configured scope."
         },
         {
           "description": "Enables the put command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-put"
+          "const": "allow-put",
+          "markdownDescription": "Enables the put command without any pre-configured scope."
         },
         {
           "description": "Denies the put command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-put"
+          "const": "deny-put",
+          "markdownDescription": "Denies the put command without any pre-configured scope."
         },
         {
           "description": "Enables the update_rune_page command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-update-rune-page"
+          "const": "allow-update-rune-page",
+          "markdownDescription": "Enables the update_rune_page command without any pre-configured scope."
         },
         {
           "description": "Denies the update_rune_page command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-update-rune-page"
+          "const": "deny-update-rune-page",
+          "markdownDescription": "Denies the update_rune_page command without any pre-configured scope."
         },
         {
-          "description": "Allows making requests to the LCU API",
+          "description": "Allows making requests to the LCU API\n#### This default permission set includes:\n\n- `allow-connected`\n- `allow-get-current-summoner`\n- `allow-get-current-rune-page`\n- `allow-update-rune-page`",
           "type": "string",
-          "const": "default"
+          "const": "default",
+          "markdownDescription": "Allows making requests to the LCU API\n#### This default permission set includes:\n\n- `allow-connected`\n- `allow-get-current-summoner`\n- `allow-get-current-rune-page`\n- `allow-update-rune-page`"
         }
       ]
     }

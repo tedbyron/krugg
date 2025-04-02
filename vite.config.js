@@ -12,7 +12,6 @@ export default defineConfig(({ mode }) => {
   const host = process.env.TAURI_DEV_HOST
 
   return {
-    clearScreen: false,
     server: {
       port: 1420,
       strictPort: true,

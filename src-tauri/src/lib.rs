@@ -73,13 +73,13 @@ pub fn run() {
 }
 
 fn setup<R: Runtime>(app: &mut App<R>) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let handle = app.handle();
+    let app = app.handle();
     task::block_in_place(move || {
         async_runtime::block_on(async {
             // Set up app state.
-            handle.manage(State {
+            app.manage(State {
                 // TODO: sys locale
-                client: ugg::ClientBuilder::new().build(handle).await?,
+                client: ugg::ClientBuilder::new().build(app).await?,
                 cancel_token: CancellationToken::new(),
                 tracker: TaskTracker::new(),
             });
@@ -93,7 +93,7 @@ fn setup<R: Runtime>(app: &mut App<R>) -> std::result::Result<(), Box<dyn std::e
         .auto_save(Duration::from_secs(15 * 60))
         .build()?;
 
-    // Tray-relative window positioning.
+    // TODO: Tray-relative window positioning.
     TrayIconBuilder::new()
         .on_tray_icon_event(|tray_handle, evt| {
             tauri_plugin_positioner::on_tray_event(tray_handle.app_handle(), &evt);
@@ -132,7 +132,7 @@ fn run_event<R: Runtime>(app: &AppHandle<R>, evt: RunEvent) {
         state.cancel_token.cancel();
         state.tracker.close();
 
-        tokio::task::block_in_place(move || {
+        task::block_in_place(move || {
             async_runtime::block_on(async {
                 state.tracker.wait().await;
             });

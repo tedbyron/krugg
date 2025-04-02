@@ -2,6 +2,8 @@
 
 Allows making requests to the LCU API
 
+#### This default permission set includes the following:
+
 - `allow-connected`
 - `allow-get-current-summoner`
 - `allow-get-current-rune-page`
