@@ -25,10 +25,10 @@ export default defineConfig(({ mode }) => {
           }
         : undefined,
       watch: {
-        ignored: ['**/crate/**'],
+        ignored: ['src-tauri/**', 'tauri-plugin-lcu/**', '!tauri-plugin-lcu/dist'],
       },
       fs: {
-        allow: [searchForWorkspaceRoot(import.meta.dirname), 'tauri-plugin-lcu/dist-js'],
+        allow: [searchForWorkspaceRoot(import.meta.dirname), 'tauri-plugin-lcu/dist'],
       },
     },
     css: {
